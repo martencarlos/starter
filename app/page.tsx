@@ -191,8 +191,8 @@ export default async function HomePage() {
                             {isAuthenticated ? (
                                 <div className='bg-primary/10 rounded-md p-4 text-left'>
                                     <p className='font-medium'>Signed in as:</p>
-                                    <p className='text-muted-foreground'>{session.user.name || 'User'}</p>
-                                    <p className='text-muted-foreground'>{session.user.email}</p>
+                                    <p className='text-muted-foreground'>{session?.user?.name || 'User'}</p>
+                                    <p className='text-muted-foreground'>{session?.user?.email}</p>
                                 </div>
                             ) : (
                                 <p className='text-muted-foreground'>

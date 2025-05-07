@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 import { getServerSession } from 'next-auth/next';
 
@@ -34,6 +35,7 @@ export default async function DashboardPage() {
                                     Sign out
                                 </button>
                             </form>
+                            <ThemeToggle />
                         </div>
                     </div>
                 </div>
