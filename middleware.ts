@@ -8,8 +8,15 @@ export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Define public paths that don't require authentication
-    const publicPaths = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email'];
-    const isPublicPath = publicPaths.some((path) => pathname.startsWith(path));
+    const publicPaths = [
+        '/', // Add the home page to public paths
+        '/login',
+        '/register',
+        '/forgot-password',
+        '/reset-password',
+        '/verify-email'
+    ];
+    const isPublicPath = publicPaths.some((path) => (path === '/' ? pathname === '/' : pathname.startsWith(path)));
 
     // Check if the path is for API routes
     const isApiPath = pathname.startsWith('/api');
@@ -19,7 +26,13 @@ export async function middleware(request: NextRequest) {
     const isAuthenticated = !!token;
 
     // Redirect authenticated users away from auth pages
-    if (isAuthenticated && isPublicPath) {
+    if (
+        isAuthenticated &&
+        (pathname === '/login' ||
+            pathname === '/register' ||
+            pathname === '/forgot-password' ||
+            pathname.startsWith('/reset-password'))
+    ) {
         return NextResponse.redirect(new URL('/dashboard', request.url));
     }
 

@@ -198,6 +198,10 @@
         @apply bg-background text-foreground;
         min-height: 100vh;
     }
+    /* Center containers by default */
+    .container {
+        @apply mx-auto;
+    }
 
     /* Improve text contrast in dark mode for better readability */
     .dark input::placeholder {
