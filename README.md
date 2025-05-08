@@ -21,8 +21,8 @@ A modern Next.js 15 starter application with authentication, PostgreSQL database
 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/yourusername/nextjs-15-starter.git
-cd nextjs-15-starter
+git clone https://github.com/martencarlos/starter
+cd starter
 ```
 
 2. **Install dependencies**

@@ -32,7 +32,7 @@ export default function HomePage() {
                                         Get Started
                                     </Button>
                                 </Link>
-                                <Link href='https://github.com/yourusername/nextjs-15-starter' target='_blank'>
+                                <Link href='https://github.com/martencarlos/starter' target='_blank'>
                                     <Button size='lg' variant='outline' className='w-full min-[400px]:w-auto'>
                                         GitHub
                                     </Button>
