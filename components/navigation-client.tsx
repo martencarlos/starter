@@ -43,13 +43,22 @@ export function Navigation({ isAuthenticated, userName }: NavigationProps) {
                     </Link>
                     <nav className='hidden items-center gap-6 md:flex'>
                         {isAuthenticated && (
-                            <Link
-                                href='/dashboard'
-                                className={`hover:text-primary text-sm transition-colors ${
-                                    isActive('/dashboard') ? 'text-primary font-medium' : 'text-foreground/60'
-                                }`}>
-                                Dashboard
-                            </Link>
+                            <>
+                                <Link
+                                    href='/dashboard'
+                                    className={`hover:text-primary text-sm transition-colors ${
+                                        isActive('/dashboard') ? 'text-primary font-medium' : 'text-foreground/60'
+                                    }`}>
+                                    Dashboard
+                                </Link>
+                                <Link
+                                    href='/profile'
+                                    className={`hover:text-primary text-sm transition-colors ${
+                                        isActive('/profile') ? 'text-primary font-medium' : 'text-foreground/60'
+                                    }`}>
+                                    Profile
+                                </Link>
+                            </>
                         )}
                     </nav>
                 </div>
@@ -79,7 +88,7 @@ export function Navigation({ isAuthenticated, userName }: NavigationProps) {
                                 <DropdownMenuItem asChild>
                                     <Link href='/profile' className='flex cursor-pointer items-center'>
                                         <Settings className='mr-2 h-4 w-4' />
-                                        <span>Settings</span>
+                                        <span>Profile Settings</span>
                                     </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
