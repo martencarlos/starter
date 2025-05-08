@@ -42,7 +42,13 @@ export async function PATCH(req: NextRequest) {
         console.log(`Updating user ${userId} with new name: ${name}`);
 
         // Update user in database
-        const result = await query(
+        interface User {
+            id: string;
+            name: string;
+            email: string;
+        }
+
+        const result: User[] = await query(
             'UPDATE users SET name = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, name, email',
             [name, userId]
         );
