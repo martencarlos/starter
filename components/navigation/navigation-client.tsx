@@ -1,5 +1,7 @@
-// components/navigation-client.tsx
+// components/navigation/navigation-client.tsx
 'use client';
+
+import { useEffect, useState } from 'react';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -16,14 +18,32 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/ui/user-avatar';
 
+import { NavigationSkeleton } from './navigation-skeleton';
 import { LogOut, Settings, User } from 'lucide-react';
 import { signOut, useSession } from 'next-auth/react';
 
-// components/navigation-client.tsx
+// components/navigation/navigation-client.tsx
 
-export function Navigation() {
+export function NavigationClient() {
     const pathname = usePathname();
     const { data: session, status } = useSession();
+    const [isMounted, setIsMounted] = useState(false);
+
+    // Set isMounted to true on client side
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    // Don't render anything until mounted on client
+    if (!isMounted) {
+        return <NavigationSkeleton />;
+    }
+
+    // Show skeleton while loading session
+    if (status === 'loading') {
+        return <NavigationSkeleton />;
+    }
+
     const isAuthenticated = status === 'authenticated';
     const userName = session?.user?.name;
 

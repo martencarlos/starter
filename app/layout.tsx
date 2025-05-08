@@ -9,6 +9,7 @@ import { ThemeProvider } from 'next-themes';
 import '@/app/globals.css';
 import { NavigationHeader } from '@/components/navigation';
 import { NextAuthProvider } from '@/components/providers/session-provider';
+import { SessionSync } from '@/components/providers/session-sync';
 import { ToastProvider } from '@/components/providers/toast-provider';
 
 const geistSans = localFont({
@@ -23,13 +24,11 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-    // Your existing metadata stays the same
     title: {
         template: '%s | Starter Template',
         default: 'Starter Template'
     },
     description: 'A modern Next.js 15 starter with authentication, PostgreSQL, and Zod validation'
-    // ... rest of your metadata
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
@@ -40,6 +39,8 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
                 <NextAuthProvider>
                     <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
                         <ToastProvider />
+                        {/* SessionSync helps maintain session state consistency */}
+                        <SessionSync />
                         <NavigationHeader />
                         <main className='flex flex-1 flex-col items-center justify-center sm:px-6 lg:px-8'>
                             {children}
