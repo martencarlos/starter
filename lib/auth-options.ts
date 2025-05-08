@@ -1,5 +1,6 @@
 // lib/auth-options.ts
 import { query, queryOne } from '@/lib/db';
+import { roleService } from '@/lib/services/role-service';
 
 import { compare } from 'bcryptjs';
 import crypto from 'crypto';
