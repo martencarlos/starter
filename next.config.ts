@@ -9,7 +9,7 @@ const withBundleAnalyzer = initializeBundleAnalyzer({
 
 // https://nextjs.org/docs/pages/api-reference/next-config-js
 const nextConfig: NextConfig = {
-    output: 'standalone',
+    // output: 'standalone',
     typescript: {
         // !! WARN !!
         // Dangerously allow production builds to successfully complete even if
