@@ -106,6 +106,50 @@ The application uses the following tables:
 3. **Login**: Email and password authentication
 4. **Password Reset**: Self-service password reset via email
 
+## Role-Based Access Control (RBAC)
+
+This application includes a comprehensive RBAC system that controls access to resources based on user roles and permissions.
+
+### Key Features
+
+- **User Roles**: Users can be assigned multiple roles (e.g., admin, user, editor)
+- **Permissions**: Fine-grained permissions are assigned to roles
+- **Multi-level Protection**: 
+  - Server-side route protection
+  - API route middleware
+  - Component-level guards
+  - UI element visibility control
+
+### Schema Design
+
+The RBAC system uses the following database tables:
+
+- `roles`: Defines available roles in the system
+- `permissions`: Defines granular permissions
+- `user_roles`: Junction table mapping users to roles
+- `role_permissions`: Junction table mapping roles to permissions
+
+### Default Roles
+
+The system comes with two default roles:
+
+- **user**: Basic role assigned to all registered users
+- **admin**: Full system access
+
+### Usage Examples
+
+#### Protecting API Routes
+
+```typescript
+// Protect with authentication
+export const GET = withAuth(handler);
+
+// Protect with role
+export const POST = withRole('admin', handler);
+
+// Protect with permission
+export const PUT = withPermission('update:users', handler);
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE.md file for details.

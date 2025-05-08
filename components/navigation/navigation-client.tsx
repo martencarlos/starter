@@ -1,9 +1,10 @@
-// components/navigation/navigation-client.tsx
 'use client';
 
+// components/navigation/navigation-client.tsx (update)
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+import { WithRole } from '@/components/rbac/with-role';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,16 +17,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/ui/user-avatar';
 
-import { LogOut, Settings, User } from 'lucide-react';
+import { LogOut, Settings, Shield, User } from 'lucide-react';
 import { Session } from 'next-auth';
 import { signOut, useSession } from 'next-auth/react';
 
-// components/navigation/navigation-client.tsx
-
-// components/navigation/navigation-client.tsx
+// components/navigation/navigation-client.tsx (update)
 
 interface NavigationClientProps {
-    // Pass the initial session state from server
     initialSession: Session | null;
 }
 
@@ -33,7 +31,6 @@ export function NavigationClient({ initialSession }: NavigationClientProps) {
     const pathname = usePathname();
     const { data: sessionData, status } = useSession();
 
-    // Use the initial session until client-side session is available
     const session = sessionData || initialSession;
     const isAuthenticated = !!session;
     const userName = session?.user?.name;
@@ -70,6 +67,19 @@ export function NavigationClient({ initialSession }: NavigationClientProps) {
                                     }`}>
                                     Profile
                                 </Link>
+
+                                {/* Admin links - only visible for users with admin role */}
+                                <WithRole role='admin'>
+                                    <Link
+                                        href='/admin/users'
+                                        className={`hover:text-primary text-sm transition-colors ${
+                                            pathname.startsWith('/admin')
+                                                ? 'text-primary font-medium'
+                                                : 'text-foreground/60'
+                                        }`}>
+                                        Admin
+                                    </Link>
+                                </WithRole>
                             </>
                         )}
                     </nav>
@@ -88,6 +98,19 @@ export function NavigationClient({ initialSession }: NavigationClientProps) {
                                     <div className='flex flex-col space-y-1'>
                                         <p className='text-sm font-medium'>{userName || 'User'}</p>
                                         <p className='text-muted-foreground text-xs'>Account</p>
+
+                                        {/* Show roles as badges */}
+                                        {session?.user?.roles && session.user.roles.length > 0 && (
+                                            <div className='mt-1 flex flex-wrap gap-1'>
+                                                {session.user.roles.map((role) => (
+                                                    <span
+                                                        key={role}
+                                                        className='bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs'>
+                                                        {role}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
@@ -103,6 +126,17 @@ export function NavigationClient({ initialSession }: NavigationClientProps) {
                                         <span>Profile Settings</span>
                                     </Link>
                                 </DropdownMenuItem>
+
+                                {/* Admin menu item - only visible for users with admin role */}
+                                <WithRole role='admin'>
+                                    <DropdownMenuItem asChild>
+                                        <Link href='/admin/users' className='flex cursor-pointer items-center'>
+                                            <Shield className='mr-2 h-4 w-4' />
+                                            <span>Admin Dashboard</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                </WithRole>
+
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                     className='text-destructive focus:text-destructive flex cursor-pointer items-center'

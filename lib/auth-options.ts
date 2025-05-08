@@ -178,6 +178,15 @@ export const authOptions: NextAuthOptions = {
                 token.id = user.id;
                 token.name = user.name;
                 token.email = user.email;
+
+                // Add roles to the token
+                const roles = await roleService.getUserRoles(user.id);
+                token.roles = roles.map((role) => role.name);
+
+                // Add permissions to the token
+                const permissions = await roleService.getUserPermissions(user.id);
+                token.permissions = permissions.map((permission) => permission.name);
+
                 if (account) {
                     token.provider = account.provider;
                 }
@@ -186,6 +195,15 @@ export const authOptions: NextAuthOptions = {
             // If this is an update event, refresh the user data from the database
             if (trigger === 'update' && session?.name) {
                 token.name = session.name;
+
+                // Re-fetch roles and permissions on update
+                if (token.id) {
+                    const roles = await roleService.getUserRoles(token.id);
+                    token.roles = roles.map((role) => role.name);
+
+                    const permissions = await roleService.getUserPermissions(token.id);
+                    token.permissions = permissions.map((permission) => permission.name);
+                }
             }
 
             // Always refresh user data on token creation/update
@@ -215,7 +233,9 @@ export const authOptions: NextAuthOptions = {
                     ...session.user,
                     id: token.id,
                     name: token.name,
-                    email: token.email
+                    email: token.email,
+                    roles: token.roles || [],
+                    permissions: token.permissions || []
                 }
             };
         }

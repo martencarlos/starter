@@ -1,13 +1,17 @@
+// components/profile/profile-content.tsx (update)
 'use client';
 
 import { useState } from 'react';
 
 import { AccountInfoForm } from '@/components/profile/account-info-form';
 import { PasswordChangeForm } from '@/components/profile/password-change-form';
+import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserAvatar } from '@/components/ui/user-avatar';
 
 import { toast } from 'sonner';
+
+// components/profile/profile-content.tsx (update)
 
 interface ProfileContentProps {
     user: {
@@ -15,6 +19,7 @@ interface ProfileContentProps {
         name?: string | null;
         email?: string | null;
         image?: string | null;
+        roles?: string[];
     };
 }
 
@@ -30,7 +35,20 @@ export default function ProfileContent({ user }: ProfileContentProps) {
     return (
         <div className='container mx-auto max-w-4xl px-4 py-8'>
             <div className='mb-8 flex items-center justify-between'>
-                <h1 className='text-3xl font-bold'>Profile Settings</h1>
+                <div>
+                    <h1 className='text-3xl font-bold'>Profile Settings</h1>
+
+                    {/* Display user roles as badges */}
+                    {user.roles && user.roles.length > 0 && (
+                        <div className='mt-2 flex flex-wrap gap-2'>
+                            {user.roles.map((role) => (
+                                <Badge key={role} variant='outline'>
+                                    {role}
+                                </Badge>
+                            ))}
+                        </div>
+                    )}
+                </div>
                 <UserAvatar name={user.name} imageUrl={user.image} size='lg' />
             </div>
 

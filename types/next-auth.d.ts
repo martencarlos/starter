@@ -1,6 +1,6 @@
+// types/next-auth.d.ts
 import 'next-auth';
 
-// Add custom properties to the Session and JWT interfaces
 declare module 'next-auth' {
     interface Session {
         user: {
@@ -8,6 +8,8 @@ declare module 'next-auth' {
             name?: string | null;
             email?: string | null;
             image?: string | null;
+            roles?: string[];
+            permissions?: string[];
         };
     }
 }
@@ -16,5 +18,7 @@ declare module 'next-auth/jwt' {
     interface JWT {
         id: string;
         provider?: string;
+        roles?: string[];
+        permissions?: string[];
     }
 }

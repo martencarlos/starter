@@ -1,17 +1,15 @@
+// app/api/auth/register/route.ts (update)
 import { NextRequest, NextResponse } from 'next/server';
 
 import { query } from '@/lib/db';
+import { roleService } from '@/lib/services/role-service';
 import { userService } from '@/lib/services/user-service';
 import { registerSchema } from '@/lib/validations/auth';
-
-import { z } from 'zod';
 
 export async function POST(req: NextRequest) {
     try {
         // Parse and validate request body
         const body = await req.json();
-
-        // Validate using Zod schema
         const validationResult = registerSchema.safeParse(body);
 
         if (!validationResult.success) {
@@ -46,6 +44,9 @@ export async function POST(req: NextRequest) {
         if (!success || !user) {
             return NextResponse.json({ message: 'Failed to create user' }, { status: 500 });
         }
+
+        // Assign default 'user' role
+        await roleService.assignRoleToUser(user.id, 'user');
 
         // Return success response
         return NextResponse.json(

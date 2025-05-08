@@ -21,10 +21,13 @@ export function LoginForm() {
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false);
+    const { status } = useSession();
 
     // Get the callbackUrl from search params (if provided)
-    const callbackUrl = searchParams?.get('callbackUrl') || '/dashboard';
+    const callbackUrl = searchParams?.get('callbackUrl');
 
+    // Use role-based redirect if no callbackUrl is specified
+    useRedirectByRole(callbackUrl || '/dashboard');
     const {
         register,
         handleSubmit,
@@ -161,4 +164,11 @@ export function LoginForm() {
             </Button>
         </form>
     );
+}
+function useSession(): { status: any } {
+    throw new Error('Function not implemented.');
+}
+
+function useRedirectByRole(arg0: string) {
+    throw new Error('Function not implemented.');
 }

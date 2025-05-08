@@ -32,6 +32,7 @@ interface UserService {
 
 export const userService: UserService = {
     // Create a new user
+    // lib/services/user-service.ts (update the createUser method)
     async createUser(data) {
         try {
             // Hash the password
@@ -42,12 +43,20 @@ export const userService: UserService = {
                 // Insert user
                 const result = await client.query(
                     `INSERT INTO users (email, name, password) 
-           VALUES ($1, $2, $3) 
-           RETURNING id, email, name, created_at, updated_at, email_verified`,
+                VALUES ($1, $2, $3) 
+                RETURNING id, email, name, created_at, updated_at, email_verified`,
                     [data.email, data.name, hashedPassword]
                 );
 
                 const user = result.rows[0];
+
+                // Assign default 'user' role
+                const roleResult = await client.query('SELECT id FROM roles WHERE name = $1', ['user']);
+
+                if (roleResult.rows.length > 0) {
+                    const roleId = roleResult.rows[0].id;
+                    await client.query('INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)', [user.id, roleId]);
+                }
 
                 // Create verification token
                 const token = crypto.randomBytes(32).toString('hex');
@@ -56,7 +65,7 @@ export const userService: UserService = {
 
                 await client.query(
                     `INSERT INTO email_verification (user_id, token, expires_at) 
-           VALUES ($1, $2, $3)`,
+                VALUES ($1, $2, $3)`,
                     [user.id, token, expiresAt]
                 );
 

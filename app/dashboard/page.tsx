@@ -1,7 +1,15 @@
-// app/(dashboard)/dashboard/page.tsx
+// app/dashboard/page.tsx (update)
 import { Metadata } from 'next';
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
+import { WithPermission } from '@/components/rbac/with-permission';
+import { WithRole } from '@/components/rbac/with-role';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { authOptions } from '@/lib/auth-options';
+import { query } from '@/lib/db';
+import { roleService } from '@/lib/services/role-service';
 
 import { getServerSession } from 'next-auth/next';
 
@@ -11,46 +19,155 @@ export const metadata: Metadata = {
 };
 
 export default async function DashboardPage() {
-    // Get the user session (although we already check in the layout, this is for the user data)
+    // Get the user session
     const session = await getServerSession(authOptions);
     const user = session?.user;
+
+    if (!user) {
+        redirect('/login?callbackUrl=/dashboard');
+    }
+
+    // Get user's roles and permissions for server-side checks
+    const roles = await roleService.getUserRoles(user.id);
+    const permissions = await roleService.getUserPermissions(user.id);
+
+    // Check if user has admin role
+    const isAdmin = roles.some((role) => role.name === 'admin');
 
     return (
         <div className='container mx-auto px-4 py-8'>
             <div className='mb-8'>
                 <h1 className='text-3xl font-bold'>Welcome to your Dashboard</h1>
                 <p className='text-muted-foreground mt-2'>
-                    This is a protected page. You can only see this if you are logged in.
+                    Your personalized dashboard based on your role and permissions.
                 </p>
             </div>
 
-            <div className='bg-card rounded-lg p-6 shadow'>
-                <div className='mb-6'>
-                    <h2 className='mb-2 text-xl font-semibold'>User Information</h2>
-                    <div className='bg-muted rounded-md p-4'>
-                        <p>
-                            <strong>Name:</strong> {user?.name || 'User'}
-                        </p>
-                        <p>
-                            <strong>Email:</strong> {user?.email}
-                        </p>
-                    </div>
-                </div>
+            <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
+                {/* Card shown to all users */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>User Profile</CardTitle>
+                        <CardDescription>View and update your profile information</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Button asChild className='w-full'>
+                            <Link href='/profile'>Manage Profile</Link>
+                        </Button>
+                    </CardContent>
+                </Card>
 
-                <div className='mt-8 grid grid-cols-1 gap-6 md:grid-cols-3'>
-                    <div className='bg-accent rounded-lg p-6 shadow-sm'>
-                        <h3 className='mb-2 font-medium'>User Profile</h3>
-                        <p className='text-muted-foreground text-sm'>View and update your profile information</p>
+                {/* Server-side role check for admin dashboard */}
+                {isAdmin && (
+                    <Card className='bg-primary/5'>
+                        <CardHeader>
+                            <CardTitle>Admin Dashboard</CardTitle>
+                            <CardDescription>Manage users, roles and permissions</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Button asChild className='w-full'>
+                                <Link href='/admin/users'>Go to Admin Panel</Link>
+                            </Button>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Client-side role check example (will be hydrated after page load) */}
+                <WithRole role='admin'>
+                    <Card className='bg-secondary/5'>
+                        <CardHeader>
+                            <CardTitle>System Analytics</CardTitle>
+                            <CardDescription>View system performance and metrics</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Button asChild variant='secondary' className='w-full'>
+                                <Link href='/admin/analytics'>View Analytics</Link>
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </WithRole>
+
+                {/* Permission-based component (client-side) */}
+                <WithPermission permission='read:users'>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>User Directory</CardTitle>
+                            <CardDescription>Browse the user directory</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Button asChild variant='outline' className='w-full'>
+                                <Link href='/users'>View Directory</Link>
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </WithPermission>
+
+                {/* Permission-based component (client-side) */}
+                <WithPermission permission='create:users'>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>User Management</CardTitle>
+                            <CardDescription>Create and manage users</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Button asChild variant='outline' className='w-full'>
+                                <Link href='/admin/users/new'>Create User</Link>
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </WithPermission>
+
+                {/* Always visible card */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Help & Support</CardTitle>
+                        <CardDescription>Get help and support</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Button asChild variant='ghost' className='w-full'>
+                            <Link href='/support'>Contact Support</Link>
+                        </Button>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* User roles and permissions display */}
+            <div className='bg-card mt-10 rounded-lg border p-6 shadow-sm'>
+                <h2 className='mb-4 text-xl font-semibold'>Your Access Information</h2>
+
+                <div className='space-y-4'>
+                    <div>
+                        <h3 className='text-lg font-medium'>Your Roles</h3>
+                        <div className='mt-2 flex flex-wrap gap-2'>
+                            {roles.length > 0 ? (
+                                roles.map((role) => (
+                                    <span
+                                        key={role.id}
+                                        className='bg-primary/10 text-primary rounded-full px-3 py-1 text-sm'>
+                                        {role.name}
+                                    </span>
+                                ))
+                            ) : (
+                                <span className='text-muted-foreground'>No assigned roles</span>
+                            )}
+                        </div>
                     </div>
 
-                    <div className='bg-accent rounded-lg p-6 shadow-sm'>
-                        <h3 className='mb-2 font-medium'>Security</h3>
-                        <p className='text-muted-foreground text-sm'>Manage your account security settings</p>
-                    </div>
-
-                    <div className='bg-accent rounded-lg p-6 shadow-sm'>
-                        <h3 className='mb-2 font-medium'>Notifications</h3>
-                        <p className='text-muted-foreground text-sm'>Configure your notification preferences</p>
+                    <div>
+                        <h3 className='text-lg font-medium'>Your Permissions</h3>
+                        <div className='mt-2 flex flex-wrap gap-2'>
+                            {permissions.length > 0 ? (
+                                permissions.map((permission) => (
+                                    <span
+                                        key={permission.id}
+                                        className='bg-secondary/10 text-secondary rounded-full px-3 py-1 text-xs'>
+                                        {permission.name}
+                                    </span>
+                                ))
+                            ) : (
+                                <span className='text-muted-foreground'>No assigned permissions</span>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
