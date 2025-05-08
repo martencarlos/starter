@@ -30,20 +30,14 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
             <Tabs defaultValue='users' className='w-full'>
                 <TabsList className='mb-8'>
-                    <Link href='/admin/users' passHref legacyBehavior>
-                        <TabsTrigger value='users' asChild>
-                            <a>Users</a>
-                        </TabsTrigger>
+                    <Link href='/admin/users'>
+                        <TabsTrigger value='users'>Users</TabsTrigger>
                     </Link>
-                    <Link href='/admin/roles' passHref legacyBehavior>
-                        <TabsTrigger value='roles' asChild>
-                            <a>Roles</a>
-                        </TabsTrigger>
+                    <Link href='/admin/roles'>
+                        <TabsTrigger value='roles'>Roles</TabsTrigger>
                     </Link>
-                    <Link href='/admin/permissions' passHref legacyBehavior>
-                        <TabsTrigger value='permissions' asChild>
-                            <a>Permissions</a>
-                        </TabsTrigger>
+                    <Link href='/admin/permissions'>
+                        <TabsTrigger value='permissions'>Permissions</TabsTrigger>
                     </Link>
                 </TabsList>
 

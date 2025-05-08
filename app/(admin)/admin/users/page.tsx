@@ -50,7 +50,6 @@ export default async function AdminUsersPage() {
                     <Link href='/admin/users/new'>Add User</Link>
                 </Button>
             </div>
-
             <div className='bg-card rounded-lg border p-6 shadow-sm'>
                 <Table>
                     <TableHeader>
