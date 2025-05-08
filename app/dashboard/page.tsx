@@ -1,7 +1,7 @@
 // app/(dashboard)/dashboard/page.tsx
 import { Metadata } from 'next';
 
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth-options';
 
 import { getServerSession } from 'next-auth/next';
 

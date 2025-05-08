@@ -1,7 +1,7 @@
 // app/api/user/update-profile/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth-options';
 import { query, queryOne } from '@/lib/db';
 
 import { getServerSession } from 'next-auth/next';

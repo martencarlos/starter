@@ -2,8 +2,8 @@
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import ProfileContent from '@/components/profile/profile-content';
+import { authOptions } from '@/lib/auth-options';
 
 import { getServerSession } from 'next-auth/next';
 

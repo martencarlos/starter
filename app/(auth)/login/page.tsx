@@ -9,11 +9,15 @@ export const metadata: Metadata = {
     description: 'Login to your account'
 };
 
-export default function LoginPage({
-    searchParams
-}: {
-    searchParams: { registered?: string; reset?: string; error?: string };
-}) {
+type SearchParams = Promise<{
+    registered?: string;
+    reset?: string;
+    error?: string;
+}>;
+
+export default async function LoginPage({ searchParams }: { searchParams: SearchParams }) {
+    // No need to use search params directly in the component render
+    // Just pass them to the login form component
     return (
         <div className='sm:mx-auto sm:w-full sm:max-w-md'>
             <h2 className='mt-6 text-center text-3xl font-bold tracking-tight'>Sign in to your account</h2>
@@ -26,7 +30,7 @@ export default function LoginPage({
 
             <div className='mt-8 sm:mx-auto sm:w-full sm:max-w-md'>
                 <div className='bg-card px-4 py-4 shadow sm:rounded-lg sm:px-10'>
-                    <LoginForm />
+                    <LoginForm searchParams={searchParams} />
                 </div>
             </div>
         </div>

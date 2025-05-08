@@ -1,7 +1,7 @@
 // app/api/user/change-password/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth-options';
 import { query, queryOne } from '@/lib/db';
 
 import { compare, hash } from 'bcrypt';

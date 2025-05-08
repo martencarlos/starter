@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+import { Pool, QueryResult, QueryResultRow } from 'pg';
 
 // Create a single pool instance to be reused across the app
 let pool: Pool | null = null;
@@ -13,7 +13,7 @@ export function getPool() {
         });
 
         // Log connection errors
-        pool.on('error', (err) => {
+        pool.on('error', (err: any) => {
             console.error('Unexpected error on idle client', err);
             process.exit(-1);
         });
@@ -23,12 +23,12 @@ export function getPool() {
 }
 
 // Execute a query with parameters
-export async function query<T>(text: string, params?: any[]): Promise<T[]> {
+export async function query<T extends QueryResultRow>(text: string, params?: any[]): Promise<T[]> {
     const pool = getPool();
     const start = Date.now();
 
     try {
-        const res = await pool.query(text, params);
+        const res: QueryResult<T> = await pool.query(text, params);
         const duration = Date.now() - start;
         console.log('Executed query', { text, duration, rows: res.rowCount });
 
@@ -40,7 +40,7 @@ export async function query<T>(text: string, params?: any[]): Promise<T[]> {
 }
 
 // Execute a query and return a single row
-export async function queryOne<T>(text: string, params?: any[]): Promise<T | null> {
+export async function queryOne<T extends QueryResultRow>(text: string, params?: any[]): Promise<T | null> {
     const rows = await query<T>(text, params);
 
     return rows.length > 0 ? rows[0] : null;
