@@ -2,12 +2,16 @@ import nodemailer from 'nodemailer';
 
 // Create a nodemailer transporter
 const transporter = nodemailer.createTransport({
-    host: 'smtp.sendgrid.net', // Replace with your SMTP server
+    host: 'smtp.zoho.eu',
     port: 587,
     secure: false, // true for 465, false for other ports
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD
+    },
+    tls: {
+        // Do not fail on invalid certs
+        rejectUnauthorized: false
     }
 });
 
