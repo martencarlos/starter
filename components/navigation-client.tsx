@@ -1,4 +1,3 @@
-// components/navigation-client.tsx
 'use client';
 
 import Link from 'next/link';
@@ -6,18 +5,18 @@ import { usePathname } from 'next/navigation';
 
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import { UserAvatar } from '@/components/ui/user-avatar';
 
-// components/navigation-client.tsx
-
-// components/navigation-client.tsx
-
-// components/navigation-client.tsx
-
-// components/navigation-client.tsx
-
-// components/navigation-client.tsx
-
-// components/navigation-client.tsx
+import { LogOut, Settings, User } from 'lucide-react';
+import { signOut } from 'next-auth/react';
 
 interface NavigationProps {
     isAuthenticated?: boolean;
@@ -31,6 +30,10 @@ export function Navigation({ isAuthenticated, userName }: NavigationProps) {
         return pathname === path;
     };
 
+    const handleSignOut = async () => {
+        await signOut({ callbackUrl: '/' });
+    };
+
     return (
         <header className='bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10 w-full border-b backdrop-blur'>
             <div className='container mx-auto flex h-14 items-center justify-between px-4'>
@@ -39,13 +42,6 @@ export function Navigation({ isAuthenticated, userName }: NavigationProps) {
                         <span className='text-xl font-bold'>Starter Template</span>
                     </Link>
                     <nav className='hidden items-center gap-6 md:flex'>
-                        {/* <Link
-                            href='/'
-                            className={`hover:text-primary text-sm transition-colors ${
-                                isActive('/') ? 'text-primary font-medium' : 'text-foreground/60'
-                            }`}>
-                            Home
-                        </Link> */}
                         {isAuthenticated && (
                             <Link
                                 href='/dashboard'
@@ -62,14 +58,39 @@ export function Navigation({ isAuthenticated, userName }: NavigationProps) {
                     <ThemeToggle />
 
                     {isAuthenticated ? (
-                        <div className='flex items-center gap-4'>
-                            <span className='hidden text-sm md:inline-block'>Hello, {userName || 'User'}</span>
-                            <form action='/api/auth/signout' method='POST'>
-                                <Button variant='outline' size='sm' type='submit'>
-                                    Sign out
-                                </Button>
-                            </form>
-                        </div>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger className='focus:outline-none'>
+                                <UserAvatar name={userName} size='sm' />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align='end' className='w-56'>
+                                <DropdownMenuLabel>
+                                    <div className='flex flex-col space-y-1'>
+                                        <p className='text-sm font-medium'>{userName || 'User'}</p>
+                                        <p className='text-muted-foreground text-xs'>Account</p>
+                                    </div>
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem asChild>
+                                    <Link href='/dashboard' className='flex cursor-pointer items-center'>
+                                        <User className='mr-2 h-4 w-4' />
+                                        <span>Dashboard</span>
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <Link href='/profile' className='flex cursor-pointer items-center'>
+                                        <Settings className='mr-2 h-4 w-4' />
+                                        <span>Settings</span>
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                    className='text-destructive focus:text-destructive flex cursor-pointer items-center'
+                                    onClick={handleSignOut}>
+                                    <LogOut className='mr-2 h-4 w-4' />
+                                    <span>Sign out</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     ) : (
                         <div className='flex items-center gap-2'>
                             <Link href='/login'>
