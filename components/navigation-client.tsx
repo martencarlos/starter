@@ -9,6 +9,16 @@ import { Button } from '@/components/ui/button';
 
 // components/navigation-client.tsx
 
+// components/navigation-client.tsx
+
+// components/navigation-client.tsx
+
+// components/navigation-client.tsx
+
+// components/navigation-client.tsx
+
+// components/navigation-client.tsx
+
 interface NavigationProps {
     isAuthenticated?: boolean;
     userName?: string | null;
@@ -26,16 +36,16 @@ export function Navigation({ isAuthenticated, userName }: NavigationProps) {
             <div className='container mx-auto flex h-14 items-center justify-between px-4'>
                 <div className='flex items-center gap-4'>
                     <Link href='/' className='flex items-center gap-2'>
-                        <span className='text-xl font-bold'>Next.js 15 Starter</span>
+                        <span className='text-xl font-bold'>Starter Template</span>
                     </Link>
                     <nav className='hidden items-center gap-6 md:flex'>
-                        <Link
+                        {/* <Link
                             href='/'
                             className={`hover:text-primary text-sm transition-colors ${
                                 isActive('/') ? 'text-primary font-medium' : 'text-foreground/60'
                             }`}>
                             Home
-                        </Link>
+                        </Link> */}
                         {isAuthenticated && (
                             <Link
                                 href='/dashboard'

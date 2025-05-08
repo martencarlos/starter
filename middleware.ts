@@ -1,22 +1,32 @@
+// middleware.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 import { getToken } from 'next-auth/jwt';
 
-// This function can be marked `async` if using `await` inside
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Define public paths that don't require authentication
     const publicPaths = [
-        '/', // Add the home page to public paths
+        '/', // Root path
+        '/home', // Main homepage
         '/login',
         '/register',
         '/forgot-password',
         '/reset-password',
         '/verify-email'
     ];
+
+    // Check if the path is a public path
     const isPublicPath = publicPaths.some((path) => (path === '/' ? pathname === '/' : pathname.startsWith(path)));
+
+    // Check if the path is for main pages (excluding dashboard and other protected routes)
+    const isMainPath =
+        pathname.startsWith('/home') ||
+        pathname.startsWith('/about') ||
+        pathname.startsWith('/contact') ||
+        pathname.startsWith('/pricing');
 
     // Check if the path is for API routes
     const isApiPath = pathname.startsWith('/api');
@@ -37,7 +47,8 @@ export async function middleware(request: NextRequest) {
     }
 
     // Redirect unauthenticated users away from protected pages
-    if (!isAuthenticated && !isPublicPath && !isApiPath) {
+    // But allow them to access public paths, main paths, and API paths
+    if (!isAuthenticated && !isPublicPath && !isMainPath && !isApiPath) {
         const url = new URL('/login', request.url);
         url.searchParams.set('callbackUrl', encodeURI(pathname));
 
