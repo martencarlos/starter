@@ -1,3 +1,4 @@
+// components/navigation-client.tsx
 'use client';
 
 import Link from 'next/link';
@@ -16,15 +17,15 @@ import {
 import { UserAvatar } from '@/components/ui/user-avatar';
 
 import { LogOut, Settings, User } from 'lucide-react';
-import { signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 
-interface NavigationProps {
-    isAuthenticated?: boolean;
-    userName?: string | null;
-}
+// components/navigation-client.tsx
 
-export function Navigation({ isAuthenticated, userName }: NavigationProps) {
+export function Navigation() {
     const pathname = usePathname();
+    const { data: session, status } = useSession();
+    const isAuthenticated = status === 'authenticated';
+    const userName = session?.user?.name;
 
     const isActive = (path: string) => {
         return pathname === path;
