@@ -7,6 +7,7 @@ import localFont from 'next/font/local';
 import { ThemeProvider } from 'next-themes';
 
 import '@/app/globals.css';
+import { NavigationHeader } from '@/components/navigation';
 
 const geistSans = localFont({
     src: './fonts/GeistVF.woff',
@@ -58,7 +59,15 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
             <body
                 className={`${geistSans.variable} ${geistMono.variable} bg-background text-foreground flex min-h-screen flex-col antialiased`}>
                 <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
-                    {children}
+                    <NavigationHeader />
+                    <main className='flex min-h-140 flex-col items-center justify-center sm:px-6 lg:px-8'>
+                        {children}
+                    </main>
+                    <footer className='border-t py-6'>
+                        <div className='text-muted-foreground container mx-auto px-4 text-center text-sm'>
+                            &copy; {new Date().getFullYear()} Starter Template
+                        </div>
+                    </footer>
                 </ThemeProvider>
             </body>
         </html>
