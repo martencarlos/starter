@@ -25,24 +25,23 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     }
 
     return (
-        <div className='container mx-auto px-4 py-8'>
+        (<div className='container mx-auto px-4 py-8'>
             <h1 className='mb-6 text-3xl font-bold'>Admin Dashboard</h1>
-
             <Tabs defaultValue='users' className='w-full'>
                 <TabsList className='mb-8'>
-                    <Link href='/admin/users'>
+                    <Link href='/admin/users' legacyBehavior>
                         <TabsTrigger value='users'>Users</TabsTrigger>
                     </Link>
-                    <Link href='/admin/roles'>
+                    <Link href='/admin/roles' legacyBehavior>
                         <TabsTrigger value='roles'>Roles</TabsTrigger>
                     </Link>
-                    <Link href='/admin/permissions'>
+                    <Link href='/admin/permissions' legacyBehavior>
                         <TabsTrigger value='permissions'>Permissions</TabsTrigger>
                     </Link>
                 </TabsList>
 
                 {children}
             </Tabs>
-        </div>
+        </div>)
     );
 }
