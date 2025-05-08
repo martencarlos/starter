@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import { query } from '@/lib/db';
+import { query, queryOne } from '@/lib/db';
 
 import { getServerSession } from 'next-auth/next';
 import { z } from 'zod';
@@ -38,10 +38,36 @@ export async function PATCH(req: NextRequest) {
         const { name } = validationResult.data;
         const userId = session.user.id;
 
-        // Update user in database
-        await query('UPDATE users SET name = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [name, userId]);
+        // Log the update attempt for debugging
+        console.log(`Updating user ${userId} with new name: ${name}`);
 
-        return NextResponse.json({ message: 'Profile updated successfully' }, { status: 200 });
+        // Update user in database
+        const result = await query(
+            'UPDATE users SET name = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, name, email',
+            [name, userId]
+        );
+
+        // Check if update was successful
+        if (!result || result.length === 0) {
+            console.error('User update failed: No rows affected');
+
+            return NextResponse.json({ message: 'Failed to update profile' }, { status: 500 });
+        }
+
+        const updatedUser = result[0];
+        console.log('User updated successfully:', updatedUser);
+
+        return NextResponse.json(
+            {
+                message: 'Profile updated successfully',
+                user: {
+                    id: updatedUser.id,
+                    name: updatedUser.name,
+                    email: updatedUser.email
+                }
+            },
+            { status: 200 }
+        );
     } catch (error) {
         console.error('Update profile error:', error);
 

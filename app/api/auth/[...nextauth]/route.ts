@@ -1,5 +1,5 @@
 // app/api/auth/[...nextauth]/route.ts
-import { query } from '@/lib/db';
+import { query, queryOne } from '@/lib/db';
 
 import { compare } from 'bcrypt';
 import { NextAuthOptions } from 'next-auth';
@@ -107,14 +107,38 @@ export const authOptions: NextAuthOptions = {
 
             return true;
         },
-        async jwt({ token, user, account }) {
-            // Persist the OAuth provider info to the token
-            if (account && user) {
-                return {
-                    ...token,
-                    id: user.id,
-                    provider: account.provider
-                };
+        async jwt({ token, user, account, trigger, session }) {
+            // Initial sign in
+            if (user) {
+                token.id = user.id;
+                token.name = user.name;
+                token.email = user.email;
+                if (account) {
+                    token.provider = account.provider;
+                }
+            }
+
+            // If this is an update event, refresh the user data from the database
+            if (trigger === 'update' && session?.name) {
+                token.name = session.name;
+            }
+
+            // Always refresh user data on token creation/update
+            if (token.id) {
+                try {
+                    const refreshedUser = await queryOne<{
+                        id: string;
+                        name: string;
+                        email: string;
+                    }>('SELECT id, name, email FROM users WHERE id = $1', [token.id]);
+
+                    if (refreshedUser) {
+                        token.name = refreshedUser.name;
+                        token.email = refreshedUser.email;
+                    }
+                } catch (error) {
+                    console.error('Error refreshing user data in JWT callback:', error);
+                }
             }
 
             return token;
@@ -124,9 +148,16 @@ export const authOptions: NextAuthOptions = {
                 ...session,
                 user: {
                     ...session.user,
-                    id: token.id
+                    id: token.id,
+                    name: token.name,
+                    email: token.email
                 }
             };
+        }
+    },
+    events: {
+        async updateUser(message) {
+            console.log('User updated event triggered:', message);
         }
     },
     secret: process.env.NEXTAUTH_SECRET

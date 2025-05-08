@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 export const metadata: Metadata = {
-    title: 'Next.js 15 Starter Template',
+    title: 'Starter Template',
     description: 'A modern Next.js 15 starter with authentication, PostgreSQL, and Zod validation'
 };
 

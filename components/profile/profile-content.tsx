@@ -4,9 +4,10 @@ import { useState } from 'react';
 
 import { AccountInfoForm } from '@/components/profile/account-info-form';
 import { PasswordChangeForm } from '@/components/profile/password-change-form';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/ui/user-avatar';
+
+import { toast } from 'sonner';
 
 interface ProfileContentProps {
     user: {
@@ -19,16 +20,13 @@ interface ProfileContentProps {
 
 export default function ProfileContent({ user }: ProfileContentProps) {
     const [activeTab, setActiveTab] = useState<'account' | 'security'>('account');
-    const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-    const showSuccessMessage = (message: string) => {
-        setStatusMessage({ type: 'success', message });
-        // Auto-dismiss success message after 5 seconds
-        setTimeout(() => setStatusMessage(null), 5000);
+    const showSuccessToast = (message: string) => {
+        toast.success(message);
     };
 
-    const showErrorMessage = (message: string) => {
-        setStatusMessage({ type: 'error', message });
+    const showErrorToast = (message: string) => {
+        toast.error(message);
     };
 
     return (
@@ -37,12 +35,6 @@ export default function ProfileContent({ user }: ProfileContentProps) {
                 <h1 className='text-3xl font-bold'>Profile Settings</h1>
                 <UserAvatar name={user.name} imageUrl={user.image} size='lg' />
             </div>
-
-            {statusMessage && (
-                <Alert variant={statusMessage.type === 'error' ? 'destructive' : 'default'} className='mb-6'>
-                    <AlertDescription>{statusMessage.message}</AlertDescription>
-                </Alert>
-            )}
 
             <div className='mb-6 flex space-x-2 border-b'>
                 <Button
@@ -61,9 +53,9 @@ export default function ProfileContent({ user }: ProfileContentProps) {
 
             <div className='bg-card rounded-lg border p-6 shadow-sm'>
                 {activeTab === 'account' ? (
-                    <AccountInfoForm user={user} onSuccess={showSuccessMessage} onError={showErrorMessage} />
+                    <AccountInfoForm user={user} onSuccess={showSuccessToast} onError={showErrorToast} />
                 ) : (
-                    <PasswordChangeForm userId={user.id} onSuccess={showSuccessMessage} onError={showErrorMessage} />
+                    <PasswordChangeForm userId={user.id} onSuccess={showSuccessToast} onError={showErrorToast} />
                 )}
             </div>
         </div>

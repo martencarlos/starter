@@ -9,6 +9,7 @@ import { ThemeProvider } from 'next-themes';
 import '@/app/globals.css';
 import { NavigationHeader } from '@/components/navigation';
 import { NextAuthProvider } from '@/components/providers/session-provider';
+import { ToastProvider } from '@/components/providers/toast-provider';
 
 const geistSans = localFont({
     src: './fonts/GeistVF.woff',
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
                 className={`${geistSans.variable} ${geistMono.variable} bg-background text-foreground flex min-h-screen flex-col antialiased`}>
                 <NextAuthProvider>
                     <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
+                        <ToastProvider />
                         <NavigationHeader />
                         <main className='flex flex-1 flex-col items-center justify-center sm:px-6 lg:px-8'>
                             {children}

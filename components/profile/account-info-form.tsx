@@ -7,8 +7,10 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useSessionUpdate } from '@/lib/session-update';
 import { zodResolver } from '@hookform/resolvers/zod';
 
+import { useSession } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -34,6 +36,8 @@ interface AccountInfoFormProps {
 export function AccountInfoForm({ user, onSuccess, onError }: AccountInfoFormProps) {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const { updateSession } = useSessionUpdate();
+    const { update } = useSession();
 
     const {
         register,
@@ -68,11 +72,20 @@ export function AccountInfoForm({ user, onSuccess, onError }: AccountInfoFormPro
 
             if (!response.ok) {
                 onError(responseData.message || 'Something went wrong');
+                console.error('Error updating profile:', responseData);
 
                 return;
             }
 
+            // Update the session with the new user data
+            await update({
+                name: data.name
+            });
+
+            // Show success message
             onSuccess('Account information updated successfully');
+
+            // Force refresh to ensure the UI updates
             router.refresh();
         } catch (error) {
             onError('An unexpected error occurred');
