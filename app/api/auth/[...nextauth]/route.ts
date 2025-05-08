@@ -2,10 +2,35 @@
 import { query, queryOne } from '@/lib/db';
 
 import { compare } from 'bcrypt';
+import crypto from 'crypto';
 import { NextAuthOptions } from 'next-auth';
 import NextAuth from 'next-auth/next';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
+
+async function createSessionRecord(userId: string, sessionToken: string | null | undefined) {
+    try {
+        // Generate a session token if not provided
+        const token = sessionToken || crypto.randomBytes(32).toString('hex');
+
+        // Set expiry to 30 days from now (matching your JWT session config)
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 30);
+
+        // Create the session record
+        await query(
+            `INSERT INTO user_sessions (user_id, session_token, expires_at)
+            VALUES ($1, $2, $3)`,
+            [userId, token, expiresAt]
+        );
+
+        return true;
+    } catch (error) {
+        console.error('Error creating session record:', error);
+
+        return false;
+    }
+}
 
 export const authOptions: NextAuthOptions = {
     providers: [
@@ -45,6 +70,8 @@ export const authOptions: NextAuthOptions = {
                     throw new Error('Invalid credentials');
                 }
 
+                await createSessionRecord(user.id, null); // Pass null to generate a new token
+
                 return {
                     id: user.id,
                     email: user.email,
@@ -77,31 +104,70 @@ export const authOptions: NextAuthOptions = {
                     ]);
 
                     if (emailUser.length === 0) {
-                        // Create a new user
+                        // Create a new user with OAuth tokens
                         const result = await query<{ id: string }>(
                             `INSERT INTO users 
-                            (name, email, oauth_provider, oauth_id, email_verified) 
-                            VALUES ($1, $2, $3, $4, TRUE) 
+                            (name, email, oauth_provider, oauth_id, email_verified, 
+                            oauth_access_token, oauth_refresh_token, oauth_expires_at) 
+                            VALUES ($1, $2, $3, $4, TRUE, $5, $6, $7) 
                             RETURNING id`,
-                            [user.name, user.email, account.provider, account.providerAccountId]
+                            [
+                                user.name,
+                                user.email,
+                                account.provider,
+                                account.providerAccountId,
+                                account.access_token || null,
+                                account.refresh_token || null,
+                                account.expires_at ? new Date(account.expires_at * 1000) : null
+                            ]
                         );
 
                         if (result.length > 0) {
                             user.id = result[0].id;
+
+                            // Create a session record
+                            await createSessionRecord(result[0].id, account.access_token);
                         }
                     } else {
                         // Link OAuth account to existing email account
                         await query(
                             `UPDATE users 
-                            SET oauth_provider = $1, oauth_id = $2, email_verified = TRUE 
-                            WHERE id = $3`,
-                            [account.provider, account.providerAccountId, emailUser[0].id]
+                            SET oauth_provider = $1, oauth_id = $2, email_verified = TRUE,
+                            oauth_access_token = $3, oauth_refresh_token = $4, oauth_expires_at = $5
+                            WHERE id = $6`,
+                            [
+                                account.provider,
+                                account.providerAccountId,
+                                account.access_token || null,
+                                account.refresh_token || null,
+                                account.expires_at ? new Date(account.expires_at * 1000) : null,
+                                emailUser[0].id
+                            ]
                         );
 
                         user.id = emailUser[0].id;
+
+                        // Create a session record
+                        await createSessionRecord(emailUser[0].id, account.access_token);
                     }
                 } else if (existingUser.length > 0) {
+                    // Update existing OAuth user with fresh tokens
+                    await query(
+                        `UPDATE users 
+                        SET oauth_access_token = $1, oauth_refresh_token = $2, oauth_expires_at = $3
+                        WHERE id = $4`,
+                        [
+                            account.access_token || null,
+                            account.refresh_token || null,
+                            account.expires_at ? new Date(account.expires_at * 1000) : null,
+                            existingUser[0].id
+                        ]
+                    );
+
                     user.id = existingUser[0].id;
+
+                    // Create a session record
+                    await createSessionRecord(existingUser[0].id, account.access_token);
                 }
             }
 
@@ -156,6 +222,16 @@ export const authOptions: NextAuthOptions = {
         }
     },
     events: {
+        async signOut({ token }) {
+            try {
+                // Delete the session record when user signs out
+                if (token?.id) {
+                    await query('DELETE FROM user_sessions WHERE user_id = $1', [token.id]);
+                }
+            } catch (error) {
+                console.error('Error removing session record:', error);
+            }
+        },
         async updateUser(message) {
             console.log('User updated event triggered:', message);
         }
