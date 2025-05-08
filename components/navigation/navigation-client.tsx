@@ -1,8 +1,6 @@
 // components/navigation/navigation-client.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
-
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -18,33 +16,26 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/ui/user-avatar';
 
-import { NavigationSkeleton } from './navigation-skeleton';
 import { LogOut, Settings, User } from 'lucide-react';
+import { Session } from 'next-auth';
 import { signOut, useSession } from 'next-auth/react';
 
 // components/navigation/navigation-client.tsx
 
-export function NavigationClient() {
+// components/navigation/navigation-client.tsx
+
+interface NavigationClientProps {
+    // Pass the initial session state from server
+    initialSession: Session | null;
+}
+
+export function NavigationClient({ initialSession }: NavigationClientProps) {
     const pathname = usePathname();
-    const { data: session, status } = useSession();
-    const [isMounted, setIsMounted] = useState(false);
+    const { data: sessionData, status } = useSession();
 
-    // Set isMounted to true on client side
-    useEffect(() => {
-        setIsMounted(true);
-    }, []);
-
-    // Don't render anything until mounted on client
-    if (!isMounted) {
-        return <NavigationSkeleton />;
-    }
-
-    // Show skeleton while loading session
-    if (status === 'loading') {
-        return <NavigationSkeleton />;
-    }
-
-    const isAuthenticated = status === 'authenticated';
+    // Use the initial session until client-side session is available
+    const session = sessionData || initialSession;
+    const isAuthenticated = !!session;
     const userName = session?.user?.name;
 
     const isActive = (path: string) => {
