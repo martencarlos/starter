@@ -3,7 +3,7 @@
 import { useState } from 'react';
 
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -12,22 +12,20 @@ import { Label } from '@/components/ui/label';
 import { LoginFormValues, loginSchema } from '@/lib/validations/auth';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 
-export function LoginForm() {
+interface LoginFormProps {
+    callbackUrl?: string;
+}
+
+export function LoginForm({ callbackUrl = '/dashboard' }: LoginFormProps) {
     const router = useRouter();
-    const searchParams = useSearchParams();
+    const { status } = useSession();
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false);
-    const { status } = useSession();
 
-    // Get the callbackUrl from search params (if provided)
-    const callbackUrl = searchParams?.get('callbackUrl');
-
-    // Use role-based redirect if no callbackUrl is specified
-    useRedirectByRole(callbackUrl || '/dashboard');
     const {
         register,
         handleSubmit,
@@ -164,11 +162,4 @@ export function LoginForm() {
             </Button>
         </form>
     );
-}
-function useSession(): { status: any } {
-    throw new Error('Function not implemented.');
-}
-
-function useRedirectByRole(arg0: string) {
-    throw new Error('Function not implemented.');
 }

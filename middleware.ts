@@ -1,4 +1,4 @@
-// middleware.ts (additional updates)
+// middleware.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
@@ -26,53 +26,57 @@ export async function middleware(request: NextRequest) {
 
     // Define public paths that don't require authentication
     const publicPaths = [
-        '/', // Root path
-        '/home', // Main homepage
+        '/', // Root path (homepage)
+        '/home', // Main homepage if separate from root
+        '/about',
+        '/contact',
+        '/pricing',
+        '/features',
         '/login',
         '/register',
         '/forgot-password',
         '/reset-password',
-        '/verify-email'
+        '/verify-email',
+        // Add any other public paths here
+        '/api/auth' // NextAuth API routes
     ];
+
+    // Static assets should always be accessible
+    if (
+        pathname.startsWith('/_next') ||
+        pathname.startsWith('/static') ||
+        pathname.startsWith('/images') ||
+        pathname.startsWith('/favicon.ico')
+    ) {
+        return NextResponse.next();
+    }
 
     // Check if the path is a public path
     const isPublicPath = publicPaths.some((path) => (path === '/' ? pathname === '/' : pathname.startsWith(path)));
 
-    // Check if the path is for main pages (excluding dashboard and other protected routes)
-    const isMainPath =
-        pathname.startsWith('/home') ||
-        pathname.startsWith('/about') ||
-        pathname.startsWith('/contact') ||
-        pathname.startsWith('/pricing');
-
-    // Check if the path is for API routes
-    const isApiPath = pathname.startsWith('/api');
-
-    // Get the JWT token
-    const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
-    const isAuthenticated = !!token;
-
-    // Redirect authenticated users away from auth pages
-    if (
-        isAuthenticated &&
-        (pathname === '/login' ||
-            pathname === '/register' ||
-            pathname === '/forgot-password' ||
-            pathname.startsWith('/reset-password'))
-    ) {
-        return NextResponse.redirect(new URL('/dashboard', request.url));
+    // Public assets and API routes should be accessible
+    if (isPublicPath) {
+        return NextResponse.next();
     }
 
+    // Get the JWT token
+    const token = await getToken({
+        req: request,
+        secret: process.env.NEXTAUTH_SECRET
+    });
+
+    const isAuthenticated = !!token;
+
     // If not authenticated and trying to access a protected route
-    if (!isAuthenticated && !isPublicPath && !isMainPath) {
+    if (!isAuthenticated) {
         // For API routes, return 401 Unauthorized
-        if (isApiPath) {
+        if (pathname.startsWith('/api')) {
             return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
         }
 
         // For regular routes, redirect to login
         const url = new URL('/login', request.url);
-        url.searchParams.set('callbackUrl', encodeURI(pathname));
+        url.searchParams.set('callbackUrl', encodeURIComponent(pathname));
 
         return NextResponse.redirect(url);
     }
@@ -88,7 +92,7 @@ export async function middleware(request: NextRequest) {
                 // If user doesn't have the required permission
                 if (!userPermissions.includes(requiredPermission)) {
                     // For API routes, return 403 Forbidden
-                    if (isApiPath) {
+                    if (pathname.startsWith('/api')) {
                         return NextResponse.json(
                             {
                                 message: `Forbidden: Missing required permission: ${requiredPermission}`
@@ -112,7 +116,7 @@ export async function middleware(request: NextRequest) {
                 // If user doesn't have the required role
                 if (!userRoles.includes(requiredRole)) {
                     // For API routes, return 403 Forbidden
-                    if (isApiPath) {
+                    if (pathname.startsWith('/api')) {
                         return NextResponse.json(
                             {
                                 message: `Forbidden: Missing required role: ${requiredRole}`
@@ -131,14 +135,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
 }
 
-// Configure middleware to run on specific paths
+// Configure middleware to run on specific paths and exclude static files
 export const config = {
     matcher: [
         // Match all request paths except for the ones starting with:
         // - _next/static (static files)
         // - _next/image (image optimization files)
         // - favicon.ico (favicon file)
-        // - public (public files)
+        // - public folder files
         '/((?!_next/static|_next/image|favicon.ico|public).*)'
     ]
 };
