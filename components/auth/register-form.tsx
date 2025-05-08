@@ -79,7 +79,7 @@ export function RegisterForm() {
     };
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className='space-y-6'>
+        <form onSubmit={handleSubmit(onSubmit)} className='space-y-2'>
             {error && (
                 <Alert variant='destructive'>
                     <AlertDescription>{error}</AlertDescription>
