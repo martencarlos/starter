@@ -26,7 +26,11 @@
                 "./*"
             ]
         },
-        "target": "ES2023"
+        "target": "ES2023",
+        "typeRoots": [
+            "./node_modules/@types",
+            "./types"
+        ]
     },
     "include": [
         "next-env.d.ts",
