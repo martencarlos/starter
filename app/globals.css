@@ -203,6 +203,19 @@
         @apply mx-auto;
     }
 
+    /* Add pointer cursor to interactive elements */
+    button,
+    a,
+    [role='button'],
+    [data-slot='button'],
+    [data-slot='dropdown-menu-trigger'],
+    [data-slot='dropdown-menu-item'],
+    [data-slot='dropdown-menu-checkbox-item'],
+    [data-slot='dropdown-menu-radio-item'],
+    [data-slot='dropdown-menu-sub-trigger'] {
+        cursor: pointer;
+    }
+
     /* Improve text contrast in dark mode for better readability */
     .dark input::placeholder {
         @apply text-muted-foreground opacity-70;
