@@ -1,7 +1,7 @@
 import { query, queryOne, transaction } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
 
-import { hash } from 'bcrypt';
+import { hash } from 'bcryptjs';
 import crypto from 'crypto';
 
 interface User {

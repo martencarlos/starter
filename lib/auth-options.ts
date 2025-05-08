@@ -1,7 +1,7 @@
 // lib/auth-options.ts
 import { query, queryOne } from '@/lib/db';
 
-import { compare } from 'bcrypt';
+import { compare } from 'bcryptjs';
 import crypto from 'crypto';
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
