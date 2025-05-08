@@ -60,9 +60,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
                 className={`${geistSans.variable} ${geistMono.variable} bg-background text-foreground flex min-h-screen flex-col antialiased`}>
                 <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
                     <NavigationHeader />
-                    <main className='flex min-h-140 flex-col items-center justify-center sm:px-6 lg:px-8'>
-                        {children}
-                    </main>
+                    <main className='flex flex-1 flex-col items-center justify-center sm:px-6 lg:px-8'>{children}</main>
                     <footer className='border-t py-6'>
                         <div className='text-muted-foreground container mx-auto px-4 text-center text-sm'>
                             &copy; {new Date().getFullYear()} Starter Template
