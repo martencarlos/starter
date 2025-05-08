@@ -3,7 +3,7 @@
 import { useState } from 'react';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -17,9 +17,13 @@ import { useForm } from 'react-hook-form';
 
 export function LoginForm() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false);
+
+    // Get the callbackUrl from search params (if provided)
+    const callbackUrl = searchParams?.get('callbackUrl') || '/dashboard';
 
     const {
         register,
@@ -42,17 +46,17 @@ export function LoginForm() {
 
             if (result?.error) {
                 setError(result.error);
+                setIsLoading(false);
 
                 return;
             }
 
-            // Redirect to dashboard on success
+            // Redirect to callbackUrl or dashboard
+            router.push(callbackUrl);
             router.refresh();
-            router.push('/dashboard');
         } catch (error) {
             setError('An unexpected error occurred');
             console.error('Login error:', error);
-        } finally {
             setIsLoading(false);
         }
     };
@@ -61,10 +65,9 @@ export function LoginForm() {
         setIsGoogleLoading(true);
 
         try {
-            await signIn('google', { callbackUrl: '/dashboard' });
+            await signIn('google', { callbackUrl });
         } catch (error) {
             console.error('Google sign in error:', error);
-        } finally {
             setIsGoogleLoading(false);
         }
     };

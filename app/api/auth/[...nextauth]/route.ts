@@ -1,4 +1,6 @@
 // app/api/auth/[...nextauth]/route.ts
+import { redirect } from 'next/dist/server/api-utils';
+
 import { query, queryOne } from '@/lib/db';
 
 import { compare } from 'bcrypt';
