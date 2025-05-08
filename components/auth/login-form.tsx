@@ -93,6 +93,9 @@ export function LoginForm() {
             <div className='space-y-2'>
                 <div className='flex items-center justify-between'>
                     <Label htmlFor='password'>Password</Label>
+                    <Link href='/forgot-password' className='text-primary hover:text-primary/80 text-sm font-medium'>
+                        Forgot password?
+                    </Link>
                 </div>
                 <Input
                     id='password'
@@ -102,12 +105,6 @@ export function LoginForm() {
                     aria-invalid={errors.password ? 'true' : 'false'}
                 />
                 {errors.password && <p className='text-destructive text-sm'>{errors.password.message}</p>}
-            </div>
-
-            <div className='flex items-center justify-end'>
-                <Link href='/forgot-password' className='text-primary hover:text-primary/80 text-sm font-medium'>
-                    Forgot password?
-                </Link>
             </div>
 
             <Button type='submit' className='w-full' disabled={isLoading || isGoogleLoading}>
