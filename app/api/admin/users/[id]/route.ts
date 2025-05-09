@@ -1,8 +1,8 @@
 // app/api/admin/users/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
+import { withRole } from '@/lib/api/with-authorization';
 import { query, queryOne } from '@/lib/db';
-import { withRole } from '@/lib/rbac-middleware';
 import { roleService } from '@/lib/services/role-service';
 
 async function getHandler(req: NextRequest, { params }: { params: { id: string } }) {
