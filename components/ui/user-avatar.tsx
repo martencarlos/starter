@@ -2,6 +2,8 @@
 
 import React from 'react';
 
+import Image from 'next/image';
+
 import { User } from 'lucide-react';
 
 interface UserAvatarProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -34,7 +36,13 @@ export function UserAvatar({ name, imageUrl, size = 'md', className, ...props }:
             } ${className}`}
             {...props}>
             {imageUrl ? (
-                <img src={imageUrl} alt={name || 'User'} className='h-full w-full rounded-full object-cover' />
+                <Image
+                    src={imageUrl}
+                    alt={name || 'User'}
+                    className='h-full w-full rounded-full object-cover'
+                    width={40}
+                    height={40}
+                />
             ) : initials ? (
                 <span className='text-sm font-medium'>{initials}</span>
             ) : (

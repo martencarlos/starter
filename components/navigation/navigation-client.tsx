@@ -19,19 +19,9 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { UserAvatar } from '@/components/ui/user-avatar';
 
-import { BarChart, LogOut, Settings, Shield, User } from 'lucide-react';
+import { BarChart, LifeBuoy, LogOut, Settings, Shield, User } from 'lucide-react';
 import { Session } from 'next-auth';
 import { signOut, useSession } from 'next-auth/react';
-
-// components/navigation/navigation-client.tsx
-
-// components/navigation/navigation-client.tsx
-
-// components/navigation/navigation-client.tsx
-
-// components/navigation/navigation-client.tsx
-
-// components/navigation/navigation-client.tsx
 
 // components/navigation/navigation-client.tsx
 
@@ -80,6 +70,13 @@ export function NavigationClient({ initialSession }: NavigationClientProps) {
                                         isActive('/profile') ? 'text-primary font-medium' : 'text-foreground/60'
                                     }`}>
                                     Profile
+                                </Link>
+                                <Link
+                                    href='/support'
+                                    className={`hover:text-primary text-sm transition-colors ${
+                                        isActive('/support') ? 'text-primary font-medium' : 'text-foreground/60'
+                                    }`}>
+                                    Support
                                 </Link>
 
                                 {/* Admin links - only visible for users with admin role */}
@@ -142,6 +139,12 @@ export function NavigationClient({ initialSession }: NavigationClientProps) {
                                     <Link href='/profile' className='flex cursor-pointer items-center'>
                                         <Settings className='mr-2 h-4 w-4' />
                                         <span>Profile Settings</span>
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <Link href='/support' className='flex cursor-pointer items-center'>
+                                        <LifeBuoy className='mr-2 h-4 w-4' />
+                                        <span>Support</span>
                                     </Link>
                                 </DropdownMenuItem>
 

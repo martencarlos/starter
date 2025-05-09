@@ -7,14 +7,22 @@ import { getToken } from 'next-auth/jwt';
 // Map of paths to required permissions
 const PERMISSION_REQUIREMENTS: Record<string, string> = {
     '/users': 'read:users', // Example UI route requiring permission
-    '/api/users': 'read:users' // Example API route requiring permission
+    '/api/users': 'read:users', // Example API route requiring permission
+    // Admin support management routes
+    '/api/admin/support': 'manage:support',
+    '/admin/support': 'manage:support',
+    // Support agent routes
+    '/api/support/admin': 'view:support'
     // Add other permission-protected paths here
 };
 
 // Map of paths to required roles
 const ROLE_REQUIREMENTS: Record<string, string> = {
     '/admin': 'admin', // Covers /admin and its subpaths like /admin/users, /admin/roles etc.
-    '/api/admin': 'admin' // Covers all API routes under /api/admin/*
+    '/api/admin': 'admin', // Covers all API routes under /api/admin/*
+    // Allow access to support agent dashboard for both admins and support agents
+    '/support/dashboard': 'support_agent' // This is handled differently in the middleware function
+    // Add other role-protected paths here
 };
 
 export async function middleware(request: NextRequest) {
@@ -29,7 +37,8 @@ export async function middleware(request: NextRequest) {
         '/reset-password',
         '/verify-email',
         '/access-denied', // Access denied page is public
-        '/api/auth' // NextAuth API routes
+        '/api/auth', // NextAuth API routes
+        '/support' // Main support page is public (authentication handled within page)
     ];
 
     // Static assets should always be accessible
@@ -52,6 +61,7 @@ export async function middleware(request: NextRequest) {
     const isPublicPath = publicPaths.some((publicPath) => {
         if (publicPath === '/') return pathname === '/';
         if (publicPath === '/api/auth') return pathname.startsWith('/api/auth');
+        if (publicPath === '/support') return pathname === '/support';
 
         return pathname === publicPath || pathname.startsWith(publicPath + '/');
     });
@@ -87,6 +97,38 @@ export async function middleware(request: NextRequest) {
     if (isAuthenticated) {
         const userRoles = (token.roles as string[]) || [];
         const userPermissions = (token.permissions as string[]) || [];
+
+        // Special handling for routes that can be accessed by multiple roles
+        // For example, support agent dashboard can be accessed by both 'admin' and 'support_agent' roles
+        if (pathname.startsWith('/support/dashboard')) {
+            const hasAccess = userRoles.includes('admin') || userRoles.includes('support_agent');
+
+            if (!hasAccess) {
+                if (pathname.startsWith('/api/')) {
+                    return NextResponse.json({ message: 'Forbidden: Insufficient permissions' }, { status: 403 });
+                }
+
+                return NextResponse.redirect(new URL('/access-denied', request.url));
+            }
+
+            // If they have access, continue to the next middleware
+            return NextResponse.next();
+        }
+
+        // For ticket detail pages, ensure users can only access their own tickets
+        // (unless they have admin or support_agent roles)
+        if (pathname.match(/\/support\/tickets\/[\w-]+$/)) {
+            const hasAdminAccess = userRoles.includes('admin') || userRoles.includes('support_agent');
+
+            // If user has admin access, they can view any ticket
+            if (hasAdminAccess) {
+                return NextResponse.next();
+            }
+
+            // Otherwise, we'll let the page component handle access control
+            // The page component will verify if the ticket belongs to the user
+            return NextResponse.next();
+        }
 
         // Check Role Requirements
         // Iterate through ROLE_REQUIREMENTS to find a match for the current pathname

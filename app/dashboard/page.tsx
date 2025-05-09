@@ -1,8 +1,9 @@
-// app/dashboard/page.tsx
+// Updated app/dashboard/page.tsx
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
+import { SupportDashboardWidget } from '@/components/support/support-dashboard-widget';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { authOptions } from '@/lib/auth-options';
@@ -54,6 +55,9 @@ export default async function DashboardPage() {
                     </CardContent>
                 </Card>
 
+                {/* Support card with recent tickets */}
+                <SupportDashboardWidget userId={user.id} />
+
                 {/* Server-side role check for admin dashboard */}
                 {isAdmin && (
                     <Card className='bg-primary/5'>
@@ -68,19 +72,6 @@ export default async function DashboardPage() {
                         </CardContent>
                     </Card>
                 )}
-
-                {/* Always visible card */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Help & Support</CardTitle>
-                        <CardDescription>Get help and support</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Button asChild variant='ghost' className='w-full'>
-                            <Link href='/support'>Contact Support</Link>
-                        </Button>
-                    </CardContent>
-                </Card>
             </div>
 
             {/* User roles and permissions display */}
