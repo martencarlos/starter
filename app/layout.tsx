@@ -9,7 +9,6 @@ import { ThemeProvider } from 'next-themes';
 import '@/app/globals.css';
 import { NavigationHeader } from '@/components/navigation';
 import { NextAuthProvider } from '@/components/providers/session-provider';
-import { SessionSync } from '@/components/providers/session-sync';
 import { ToastProvider } from '@/components/providers/toast-provider';
 
 const geistSans = localFont({
@@ -40,7 +39,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
                     <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
                         <ToastProvider />
                         {/* SessionSync helps maintain session state consistency */}
-                        <SessionSync />
+
                         <NavigationHeader />
                         <main className='flex flex-1 flex-col items-center justify-center sm:px-6 lg:px-8'>
                             {children}
