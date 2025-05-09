@@ -64,7 +64,7 @@ async function patchHandler(req: NextRequest, { params }: { params: { id: string
     }
 
     // Update other user fields if needed
-    if (body.name || body.email) {
+    if (body.name || body.email || body.email_verified !== undefined) {
         const updates = [];
         const values = [];
         let paramIndex = 1;
@@ -81,6 +81,12 @@ async function patchHandler(req: NextRequest, { params }: { params: { id: string
             paramIndex++;
         }
 
+        if (body.email_verified !== undefined) {
+            updates.push(`email_verified = $${paramIndex}`);
+            values.push(body.email_verified);
+            paramIndex++;
+        }
+
         if (updates.length > 0) {
             updates.push(`updated_at = CURRENT_TIMESTAMP`);
             values.push(id);
@@ -92,5 +98,59 @@ async function patchHandler(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ message: 'User updated successfully' });
 }
 
+async function deleteHandler(req: NextRequest, { params }: { params: { id: string } }) {
+    const { id } = params;
+
+    // Check if user exists
+    const user = await queryOne('SELECT id FROM users WHERE id = $1', [id]);
+
+    if (!user) {
+        return NextResponse.json({ message: 'User not found' }, { status: 404 });
+    }
+
+    // Prevent deletion of the user making the request (admin can't delete themselves)
+    const session = req.headers.get('Session');
+    if (session && JSON.parse(session).user?.id === id) {
+        return NextResponse.json(
+            {
+                message: 'Cannot delete your own account'
+            },
+            { status: 403 }
+        );
+    }
+
+    try {
+        // Delete sessions first
+        await query('DELETE FROM user_sessions WHERE user_id = $1', [id]);
+
+        // Delete email verification tokens
+        await query('DELETE FROM email_verification WHERE user_id = $1', [id]);
+
+        // Delete password reset tokens
+        await query('DELETE FROM password_reset WHERE user_id = $1', [id]);
+
+        // Delete role assignments (user_roles has ON DELETE CASCADE, but let's be explicit)
+        await query('DELETE FROM user_roles WHERE user_id = $1', [id]);
+
+        // Delete role assignment history
+        await query('DELETE FROM role_assignment_history WHERE user_id = $1', [id]);
+
+        // Finally delete the user
+        await query('DELETE FROM users WHERE id = $1', [id]);
+
+        return NextResponse.json({ message: 'User deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting user:', error);
+
+        return NextResponse.json(
+            {
+                message: 'Failed to delete user'
+            },
+            { status: 500 }
+        );
+    }
+}
+
 export const GET = withRole('admin', getHandler);
 export const PATCH = withRole('admin', patchHandler);
+export const DELETE = withRole('admin', deleteHandler);

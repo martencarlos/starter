@@ -1,4 +1,3 @@
-// components/admin/user-edit-form.tsx
 'use client';
 
 import { useState } from 'react';
@@ -8,14 +7,14 @@ import { useRouter } from 'next/navigation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 
+import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-
-// components/admin/user-edit-form.tsx
 
 interface Role {
     id: number;
@@ -47,6 +46,8 @@ export default function UserEditForm({ user, allRoles }: UserEditFormProps) {
     const [selectedRoles, setSelectedRoles] = useState<string[]>(user.roles || []);
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [showDeleteDialog, setShowDeleteDialog] = useState<boolean>(false);
+    const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target;
@@ -100,97 +101,155 @@ export default function UserEditForm({ user, allRoles }: UserEditFormProps) {
         }
     };
 
+    const handleDelete = async () => {
+        setIsDeleting(true);
+
+        try {
+            const response = await fetch(`/api/admin/users/${user.id}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.message || 'Failed to delete user');
+            }
+
+            toast.success('User deleted successfully');
+            setShowDeleteDialog(false);
+            router.push('/admin/users');
+            router.refresh();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+            toast.error('Failed to delete user');
+            setShowDeleteDialog(false);
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     return (
-        <form onSubmit={handleSubmit} className='space-y-6'>
-            {error && (
-                <Alert variant='destructive'>
-                    <AlertDescription>{error}</AlertDescription>
-                </Alert>
-            )}
+        <>
+            <form onSubmit={handleSubmit} className='space-y-6'>
+                {error && (
+                    <Alert variant='destructive'>
+                        <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                )}
 
-            <div className='space-y-4'>
-                <div className='space-y-2'>
-                    <Label htmlFor='name'>Name</Label>
-                    <Input
-                        id='name'
-                        name='name'
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        disabled={isLoading}
-                    />
-                </div>
-
-                <div className='space-y-2'>
-                    <Label htmlFor='email'>Email</Label>
-                    <Input
-                        id='email'
-                        name='email'
-                        type='email'
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        disabled={isLoading}
-                    />
-                </div>
-
-                <div className='flex items-center space-x-2'>
-                    <Switch
-                        id='email_verified'
-                        name='email_verified'
-                        checked={formData.email_verified}
-                        onCheckedChange={(checked) => setFormData({ ...formData, email_verified: checked })}
-                        disabled={isLoading}
-                    />
-                    <Label htmlFor='email_verified'>Email verified</Label>
-                </div>
-
-                <div className='space-y-2'>
-                    <Label>Roles</Label>
-                    <div className='mb-3 flex flex-wrap gap-2'>
-                        {selectedRoles.map((role) => (
-                            <Badge key={role} variant='secondary' className='px-2 py-1'>
-                                {role}
-                                <button
-                                    type='button'
-                                    onClick={() => removeRole(role)}
-                                    className='hover:text-destructive ml-2'>
-                                    ×
-                                </button>
-                            </Badge>
-                        ))}
-                        {selectedRoles.length === 0 && (
-                            <span className='text-muted-foreground text-sm'>No roles assigned</span>
-                        )}
+                <div className='space-y-4'>
+                    <div className='space-y-2'>
+                        <Label htmlFor='name'>Name</Label>
+                        <Input
+                            id='name'
+                            name='name'
+                            value={formData.name}
+                            onChange={handleInputChange}
+                            disabled={isLoading}
+                        />
                     </div>
-                    <Select onValueChange={addRole} disabled={isLoading}>
-                        <SelectTrigger className='w-full'>
-                            <SelectValue placeholder='Add a role' />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {allRoles.map((role) => (
-                                <SelectItem
-                                    key={role.id}
-                                    value={role.name}
-                                    disabled={selectedRoles.includes(role.name)}>
-                                    {role.name} {role.description ? `- ${role.description}` : ''}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-            </div>
 
-            <div className='flex justify-end gap-4'>
-                <Button
-                    type='button'
-                    variant='outline'
-                    onClick={() => router.push('/admin/users')}
-                    disabled={isLoading}>
-                    Cancel
-                </Button>
-                <Button type='submit' disabled={isLoading}>
-                    {isLoading ? 'Saving...' : 'Save Changes'}
-                </Button>
-            </div>
-        </form>
+                    <div className='space-y-2'>
+                        <Label htmlFor='email'>Email</Label>
+                        <Input
+                            id='email'
+                            name='email'
+                            type='email'
+                            value={formData.email}
+                            onChange={handleInputChange}
+                            disabled={isLoading}
+                        />
+                    </div>
+
+                    <div className='flex items-center space-x-2'>
+                        <Switch
+                            id='email_verified'
+                            name='email_verified'
+                            checked={formData.email_verified}
+                            onCheckedChange={(checked) => setFormData({ ...formData, email_verified: checked })}
+                            disabled={isLoading}
+                        />
+                        <Label htmlFor='email_verified'>Email verified</Label>
+                    </div>
+
+                    <div className='space-y-2'>
+                        <Label>Roles</Label>
+                        <div className='mb-3 flex flex-wrap gap-2'>
+                            {selectedRoles.map((role) => (
+                                <Badge key={role} variant='secondary' className='px-2 py-1'>
+                                    {role}
+                                    <button
+                                        type='button'
+                                        onClick={() => removeRole(role)}
+                                        className='hover:text-destructive ml-2'>
+                                        ×
+                                    </button>
+                                </Badge>
+                            ))}
+                            {selectedRoles.length === 0 && (
+                                <span className='text-muted-foreground text-sm'>No roles assigned</span>
+                            )}
+                        </div>
+                        <Select onValueChange={addRole} disabled={isLoading}>
+                            <SelectTrigger className='w-full'>
+                                <SelectValue placeholder='Add a role' />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {allRoles.map((role) => (
+                                    <SelectItem
+                                        key={role.id}
+                                        value={role.name}
+                                        disabled={selectedRoles.includes(role.name)}>
+                                        {role.name} {role.description ? `- ${role.description}` : ''}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+
+                <div className='flex justify-between gap-4'>
+                    <Button
+                        type='button'
+                        variant='destructive'
+                        onClick={() => setShowDeleteDialog(true)}
+                        disabled={isLoading}>
+                        <Trash2 className='mr-2 h-4 w-4' />
+                        Delete User
+                    </Button>
+
+                    <div className='flex gap-4'>
+                        <Button
+                            type='button'
+                            variant='outline'
+                            onClick={() => router.push('/admin/users')}
+                            disabled={isLoading}>
+                            Cancel
+                        </Button>
+                        <Button type='submit' disabled={isLoading}>
+                            {isLoading ? 'Saving...' : 'Save Changes'}
+                        </Button>
+                    </div>
+                </div>
+            </form>
+
+            <DeleteConfirmationDialog
+                open={showDeleteDialog}
+                onOpenChange={setShowDeleteDialog}
+                onConfirm={handleDelete}
+                title='Delete User'
+                description={
+                    <>
+                        <p>
+                            Are you sure you want to delete user <strong>{user.name}</strong>?
+                        </p>
+                        <p className='mt-2'>
+                            This action cannot be undone and will permanently remove the user account and all associated
+                            data.
+                        </p>
+                    </>
+                }
+                isLoading={isDeleting}
+            />
+        </>
     );
 }

@@ -82,16 +82,41 @@ async function deleteHandler(req: NextRequest, { params }: { params: { id: strin
     const { id } = params;
 
     // Check if permission exists
-    const permission = await queryOne('SELECT id FROM permissions WHERE id = $1', [id]);
+    const permission = await queryOne('SELECT id, name FROM permissions WHERE id = $1', [id]);
 
     if (!permission) {
         return NextResponse.json({ message: 'Permission not found' }, { status: 404 });
     }
 
-    // Delete permission (cascades to role_permissions)
-    await query('DELETE FROM permissions WHERE id = $1', [id]);
+    // Check if this is a core permission that shouldn't be deleted
+    const corePermissions = [
+        'manage:users',
+        'manage:roles',
+        'manage:permissions',
+        'view:admin_dashboard',
+        'read:users',
+        'read:reports',
+        'read:audit_log',
+        'read:analytics'
+    ];
 
-    return NextResponse.json({ message: 'Permission deleted successfully' });
+    if (corePermissions.includes(permission.name)) {
+        return NextResponse.json({ message: 'Cannot delete core system permissions' }, { status: 403 });
+    }
+
+    try {
+        // First remove all permission-role associations
+        await query('DELETE FROM role_permissions WHERE permission_id = $1', [id]);
+
+        // Then delete the permission
+        await query('DELETE FROM permissions WHERE id = $1', [id]);
+
+        return NextResponse.json({ message: 'Permission deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting permission:', error);
+
+        return NextResponse.json({ message: 'Failed to delete permission' }, { status: 500 });
+    }
 }
 
 export const GET = withRole('admin', getHandler);
