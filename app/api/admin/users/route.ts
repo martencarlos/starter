@@ -52,7 +52,8 @@ async function postHandler(req: NextRequest) {
         const { user, success } = await userService.createUser({
             name,
             email,
-            password
+            password,
+            roles
         });
 
         if (!success || !user) {
@@ -62,16 +63,6 @@ async function postHandler(req: NextRequest) {
                 },
                 { status: 500 }
             );
-        }
-
-        // Assign roles
-        // Remove default role to prevent duplicates
-        const defaultRole = 'user';
-        await roleService.removeRoleFromUser(user.id, defaultRole);
-
-        // Assign selected roles
-        for (const roleName of roles) {
-            await roleService.assignRoleToUser(user.id, roleName);
         }
 
         return NextResponse.json(

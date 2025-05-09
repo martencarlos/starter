@@ -18,6 +18,7 @@ interface CreateUserData {
     email: string;
     name: string;
     password: string;
+    roles?: string[];
 }
 
 interface UserService {
@@ -31,45 +32,49 @@ interface UserService {
 }
 
 export const userService: UserService = {
-    // Create a new user
-    // lib/services/user-service.ts (update the createUser method)
     async createUser(data) {
         try {
-            // Hash the password
             const hashedPassword = await hash(data.password, 10);
 
-            // Create user within a transaction
             return await transaction(async (client) => {
-                // Insert user
                 const result = await client.query(
                     `INSERT INTO users (email, name, password) 
-                VALUES ($1, $2, $3) 
-                RETURNING id, email, name, created_at, updated_at, email_verified`,
+                        VALUES ($1, $2, $3) 
+                        RETURNING id, email, name, created_at, updated_at, email_verified`,
                     [data.email, data.name, hashedPassword]
                 );
-
                 const user = result.rows[0];
 
-                // Assign default 'user' role
-                const roleResult = await client.query('SELECT id FROM roles WHERE name = $1', ['user']);
-
-                if (roleResult.rows.length > 0) {
-                    const roleId = roleResult.rows[0].id;
-                    await client.query('INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)', [user.id, roleId]);
+                // Assign roles
+                const rolesToAssign = data.roles && data.roles.length > 0 ? data.roles : ['user'];
+                for (const roleName of rolesToAssign) {
+                    // Check if role exists
+                    const role = await client.query('SELECT id FROM roles WHERE name = $1', [roleName]);
+                    if (role.rows.length > 0) {
+                        const roleId = role.rows[0].id;
+                        await client.query(
+                            'INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT (user_id, role_id) DO NOTHING',
+                            [user.id, roleId]
+                        );
+                        // Manually log audit for role assignment if assignRoleToUser isn't client-aware
+                        await client.query(
+                            `INSERT INTO role_assignment_history (user_id, role_id, action)
+                                 VALUES ($1, $2, 'assign')`, // assigned_by could be system or null
+                            [user.id, roleId]
+                        );
+                    }
                 }
 
-                // Create verification token
                 const token = crypto.randomBytes(32).toString('hex');
                 const expiresAt = new Date();
-                expiresAt.setHours(expiresAt.getHours() + 24); // 24 hours
+                expiresAt.setHours(expiresAt.getHours() + 24);
 
                 await client.query(
                     `INSERT INTO email_verification (user_id, token, expires_at) 
-                VALUES ($1, $2, $3)`,
+                        VALUES ($1, $2, $3)`,
                     [user.id, token, expiresAt]
                 );
 
-                // Send verification email
                 const verifyUrl = `${process.env.NEXTAUTH_URL}/verify-email?token=${token}`;
                 await sendEmail('verifyEmail', { email: user.email, verifyUrl });
 

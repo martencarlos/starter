@@ -1,42 +1,34 @@
 // lib/auth-helpers.ts
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+
+// To get pathname in Server Components
 
 import { authOptions } from '@/lib/auth-options';
 import { roleService } from '@/lib/services/role-service';
 
 import { getServerSession } from 'next-auth/next';
 
-export async function requireAuthentication(redirectTo: string = '/login') {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-        redirect(`${redirectTo}?callbackUrl=${encodeURIComponent(window.location.pathname)}`);
+// Helper to get current pathname on the server
+async function getCurrentPathname(): Promise<string> {
+    const headersList = await headers();
+    const url = headersList.get('x-url') || headersList.get('referer') || '';
+    try {
+        return new URL(url).pathname;
+    } catch {
+        return '/'; // Fallback
     }
-
-    return session.user;
 }
 
-export async function requireRole(roleName: string, redirectTo: string = '/dashboard') {
+export async function requirePermission(
+    permissionName: string,
+    options: { redirectTo?: string; currentPathname?: string } = {}
+) {
+    const { redirectTo = '/dashboard', currentPathname = await getCurrentPathname() } = options;
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-        redirect('/login');
-    }
-
-    const hasRole = await roleService.hasRole(session.user.id, roleName);
-
-    if (!hasRole) {
-        redirect(redirectTo);
-    }
-
-    return session.user;
-}
-
-export async function requirePermission(permissionName: string, redirectTo: string = '/dashboard') {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-        redirect('/login');
+        redirect(`/login?callbackUrl=${encodeURIComponent(currentPathname)}`);
     }
 
     const hasPermission = await roleService.hasPermission(session.user.id, permissionName);
