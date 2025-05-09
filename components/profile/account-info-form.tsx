@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useSessionUpdate } from '@/lib/session-update';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { useSession } from 'next-auth/react';
@@ -36,7 +35,6 @@ interface AccountInfoFormProps {
 export function AccountInfoForm({ user, onSuccess, onError }: AccountInfoFormProps) {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const { updateSession } = useSessionUpdate();
     const { update } = useSession();
 
     const {
