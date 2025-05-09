@@ -115,7 +115,7 @@ export default async function DashboardPage() {
                                 permissions.map((permission) => (
                                     <span
                                         key={permission.id}
-                                        className='bg-secondary/10 text-secondary rounded-full px-3 py-1 text-xs'>
+                                        className='bg-secondary/80 text-secondary-foreground rounded-full px-3 py-1 text-xs'>
                                         {permission.name}
                                     </span>
                                 ))

@@ -155,8 +155,8 @@ export const roleService = {
             }
 
             // Get updated roles and permissions
-            const roles = await getUserRoles(userId);
-            const permissions = await getUserPermissions(userId);
+            const roles = await this.getUserRoles(userId);
+            const permissions = await this.getUserPermissions(userId);
 
             // For each session, update the JWT token
             // Note: This is a simplified version that would need to be adapted to your JWT implementation
