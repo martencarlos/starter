@@ -6,17 +6,15 @@ import { getToken } from 'next-auth/jwt';
 
 // Map of paths to required permissions
 const PERMISSION_REQUIREMENTS: Record<string, string> = {
-    '/users': 'read:users',
-    '/api/users': 'read:users'
+    '/users': 'read:users', // Example UI route requiring permission
+    '/api/users': 'read:users' // Example API route requiring permission
+    // Add other permission-protected paths here
 };
 
 // Map of paths to required roles
 const ROLE_REQUIREMENTS: Record<string, string> = {
-    '/admin': 'admin',
-    '/admin/users': 'admin',
-    '/admin/roles': 'admin',
-    '/admin/permissions': 'admin',
-    '/admin/analytics': 'admin'
+    '/admin': 'admin', // Covers /admin and its subpaths like /admin/users, /admin/roles etc.
+    '/api/admin': 'admin' // Covers all API routes under /api/admin/*
 };
 
 export async function middleware(request: NextRequest) {
@@ -30,23 +28,34 @@ export async function middleware(request: NextRequest) {
         '/forgot-password',
         '/reset-password',
         '/verify-email',
+        '/access-denied', // Access denied page is public
         '/api/auth' // NextAuth API routes
     ];
 
     // Static assets should always be accessible
     if (
         pathname.startsWith('/_next') ||
-        pathname.startsWith('/static') ||
-        pathname.startsWith('/images') ||
-        pathname.startsWith('/favicon.ico')
+        pathname.startsWith('/static') || // if you have a /public/static folder
+        pathname.startsWith('/images') || // if you have a /public/images folder
+        pathname.startsWith('/fonts') || // if you have a /public/fonts folder or /app/fonts
+        pathname.endsWith('.ico') || // favicons
+        pathname.endsWith('.png') ||
+        pathname.endsWith('.jpg') ||
+        pathname.endsWith('.svg') ||
+        pathname.endsWith('.woff') ||
+        pathname.endsWith('.woff2')
     ) {
         return NextResponse.next();
     }
 
-    // Check if the path is a public path
-    const isPublicPath = publicPaths.some((path) => (path === '/' ? pathname === '/' : pathname.startsWith(path)));
+    // Check if the path is a public path (exact match or prefix for /api/auth)
+    const isPublicPath = publicPaths.some((publicPath) => {
+        if (publicPath === '/') return pathname === '/';
+        if (publicPath === '/api/auth') return pathname.startsWith('/api/auth');
 
-    // Public assets and API routes should be accessible
+        return pathname === publicPath || pathname.startsWith(publicPath + '/');
+    });
+
     if (isPublicPath) {
         return NextResponse.next();
     }
@@ -62,64 +71,59 @@ export async function middleware(request: NextRequest) {
     // If not authenticated and trying to access a protected route
     if (!isAuthenticated) {
         // For API routes, return 401 Unauthorized
-        if (pathname.startsWith('/api')) {
+        if (pathname.startsWith('/api/')) {
+            // More specific check for API routes
             return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
         }
 
         // For regular routes, redirect to login
-        const url = new URL('/login', request.url);
-        url.searchParams.set('callbackUrl', encodeURIComponent(pathname));
+        const loginUrl = new URL('/login', request.url);
+        loginUrl.searchParams.set('callbackUrl', pathname + request.nextUrl.search);
 
-        return NextResponse.redirect(url);
+        return NextResponse.redirect(loginUrl);
     }
 
-    // If authenticated, check permission requirements
+    // If authenticated, perform role and permission checks
     if (isAuthenticated) {
-        // Check if this path requires specific permissions
-        for (const [pathPrefix, requiredPermission] of Object.entries(PERMISSION_REQUIREMENTS)) {
-            if (pathname.startsWith(pathPrefix)) {
-                // Get user permissions from the token
-                const userPermissions = (token.permissions as string[]) || [];
+        const userRoles = (token.roles as string[]) || [];
+        const userPermissions = (token.permissions as string[]) || [];
 
-                // If user doesn't have the required permission
-                if (!userPermissions.includes(requiredPermission)) {
-                    // For API routes, return 403 Forbidden
-                    if (pathname.startsWith('/api')) {
+        // Check Role Requirements
+        // Iterate through ROLE_REQUIREMENTS to find a match for the current pathname
+        for (const [pathPrefix, requiredRole] of Object.entries(ROLE_REQUIREMENTS)) {
+            if (pathname.startsWith(pathPrefix)) {
+                if (!userRoles.includes(requiredRole)) {
+                    if (pathname.startsWith('/api/')) {
                         return NextResponse.json(
-                            {
-                                message: `Forbidden: Missing required permission: ${requiredPermission}`
-                            },
+                            { message: `Forbidden: Role '${requiredRole}' required.` },
                             { status: 403 }
                         );
                     }
 
-                    // For regular routes, redirect to access denied page
                     return NextResponse.redirect(new URL('/access-denied', request.url));
                 }
+                // If role requirement is met for this prefix, no need to check other role prefixes
+                // But continue to check permissions if any
+                break;
             }
         }
 
-        // Check if this path requires specific roles
-        for (const [pathPrefix, requiredRole] of Object.entries(ROLE_REQUIREMENTS)) {
+        // Check Permission Requirements
+        // Iterate through PERMISSION_REQUIREMENTS to find a match
+        for (const [pathPrefix, requiredPermission] of Object.entries(PERMISSION_REQUIREMENTS)) {
             if (pathname.startsWith(pathPrefix)) {
-                // Get user roles from the token
-                const userRoles = (token.roles as string[]) || [];
-
-                // If user doesn't have the required role
-                if (!userRoles.includes(requiredRole)) {
-                    // For API routes, return 403 Forbidden
-                    if (pathname.startsWith('/api')) {
+                if (!userPermissions.includes(requiredPermission)) {
+                    if (pathname.startsWith('/api/')) {
                         return NextResponse.json(
-                            {
-                                message: `Forbidden: Missing required role: ${requiredRole}`
-                            },
+                            { message: `Forbidden: Permission '${requiredPermission}' required.` },
                             { status: 403 }
                         );
                     }
 
-                    // For regular routes, redirect to access denied page
                     return NextResponse.redirect(new URL('/access-denied', request.url));
                 }
+                // If permission requirement is met for this prefix, no need to check other permission prefixes
+                break;
             }
         }
     }
@@ -127,14 +131,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
 }
 
-// Configure middleware to run on specific paths and exclude static files
+// Configure middleware to run on specific paths
 export const config = {
     matcher: [
         // Match all request paths except for the ones starting with:
         // - _next/static (static files)
         // - _next/image (image optimization files)
         // - favicon.ico (favicon file)
-        // - public folder files
-        '/((?!_next/static|_next/image|favicon.ico|public).*)'
+        // - (these are already handled by the conditional return above, but good for clarity)
+        '/((?!_next/static|_next/image|.*\\.ico$|.*\\.png$|.*\\.jpg$|.*\\.svg$|.*\\.woff$|.*\\.woff2$).*)'
     ]
 };

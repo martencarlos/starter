@@ -1,14 +1,13 @@
-// app/(admin)/admin/permissions/page.tsx
+// app/admin/permissions/page.tsx
+// This page is modified to only list predefined permissions. Management (add/edit/delete) is removed.
 import { Metadata } from 'next';
-import Link from 'next/link';
 
-import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { query } from '@/lib/db';
 
 export const metadata: Metadata = {
-    title: 'Admin - Permissions',
-    description: 'Manage permissions'
+    title: 'Admin - Predefined Permissions',
+    description: 'View system-defined permissions'
 };
 
 export default async function AdminPermissionsPage() {
@@ -23,10 +22,10 @@ export default async function AdminPermissionsPage() {
     return (
         <div className='bg-card rounded-lg border p-6 shadow-sm'>
             <div className='mb-6 flex items-center justify-between'>
-                <h2 className='text-2xl font-semibold'>Permissions Management</h2>
-                <Button asChild>
-                    <Link href='/admin/permissions/new'>Add Permission</Link>
-                </Button>
+                <h2 className='text-2xl font-semibold'>Predefined System Permissions</h2>
+                <p className='text-muted-foreground text-sm'>
+                    Permissions are managed in <code>sql/init.sql</code> and assigned to roles.
+                </p>
             </div>
 
             <Table>
@@ -34,8 +33,7 @@ export default async function AdminPermissionsPage() {
                     <TableRow>
                         <TableHead>Name</TableHead>
                         <TableHead>Description</TableHead>
-                        <TableHead>Assigned Roles</TableHead>
-                        <TableHead className='text-right'>Actions</TableHead>
+                        <TableHead>Assigned to Roles (Count)</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -44,11 +42,6 @@ export default async function AdminPermissionsPage() {
                             <TableCell className='font-medium'>{permission.name}</TableCell>
                             <TableCell>{permission.description || '-'}</TableCell>
                             <TableCell>{permission.role_count || 0}</TableCell>
-                            <TableCell className='text-right'>
-                                <Button variant='ghost' size='sm' asChild>
-                                    <Link href={`/admin/permissions/${permission.id}`}>Edit</Link>
-                                </Button>
-                            </TableCell>
                         </TableRow>
                     ))}
                 </TableBody>

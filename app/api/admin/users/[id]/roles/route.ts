@@ -1,10 +1,10 @@
 // app/api/admin/users/[id]/roles/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
-import { withRole } from '@/lib/api/with-authorization';
 import { roleService } from '@/lib/services/role-service';
 
 async function putHandler(req: NextRequest, { params }: { params: { id: string } }) {
+    // Protection for this route is handled by middleware.ts
     const { id } = params;
     const body = await req.json();
 
@@ -42,5 +42,4 @@ async function putHandler(req: NextRequest, { params }: { params: { id: string }
     }
 }
 
-// Only admins can update user roles
-export const PUT = withRole('admin', putHandler);
+export const PUT = putHandler;

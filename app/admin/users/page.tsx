@@ -1,4 +1,4 @@
-// app/(admin)/admin/users/page.tsx
+// app/admin/users/page.tsx
 import { Metadata } from 'next';
 import Link from 'next/link';
 

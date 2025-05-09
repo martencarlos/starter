@@ -1,7 +1,5 @@
-// components/profile/profile-content.tsx (update)
+// components/profile/profile-content.tsx
 'use client';
-
-import { useState } from 'react';
 
 import { AccountInfoForm } from '@/components/profile/account-info-form';
 import { PasswordChangeForm } from '@/components/profile/password-change-form';
@@ -11,7 +9,7 @@ import { UserAvatar } from '@/components/ui/user-avatar';
 
 import { toast } from 'sonner';
 
-// components/profile/profile-content.tsx (update)
+// components/profile/profile-content.tsx
 
 interface ProfileContentProps {
     user: {

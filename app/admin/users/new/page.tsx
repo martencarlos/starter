@@ -1,4 +1,4 @@
-// app/(admin)/admin/users/new/page.tsx
+// app/admin/users/new/page.tsx
 import { Metadata } from 'next';
 
 import UserCreateForm from '@/components/admin/user-create-form';

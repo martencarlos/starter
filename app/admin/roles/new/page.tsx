@@ -1,4 +1,4 @@
-// app/(admin)/admin/roles/new/page.tsx
+// app/admin/roles/new/page.tsx
 import { Metadata } from 'next';
 
 import RoleForm from '@/components/admin/role-form';

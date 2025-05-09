@@ -1,10 +1,11 @@
 // app/api/admin/roles/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
-import { withRole } from '@/lib/api/with-authorization';
 import { query, queryOne } from '@/lib/db';
 
 async function getHandler(req: NextRequest) {
+    // Protection for this route is handled by middleware.ts
+
     // Get all roles with their permissions
     const roles = await query(
         `SELECT r.id, r.name, r.description,
@@ -20,6 +21,7 @@ async function getHandler(req: NextRequest) {
 }
 
 async function postHandler(req: NextRequest) {
+    // Protection for this route is handled by middleware.ts
     const body = await req.json();
 
     if (!body.name) {
@@ -64,5 +66,5 @@ async function postHandler(req: NextRequest) {
     );
 }
 
-export const GET = withRole('admin', getHandler);
-export const POST = withRole('admin', postHandler);
+export const GET = getHandler;
+export const POST = postHandler;

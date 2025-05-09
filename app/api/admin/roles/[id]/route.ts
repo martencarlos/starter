@@ -1,10 +1,10 @@
 // app/api/admin/roles/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
-import { withRole } from '@/lib/api/with-authorization';
 import { query, queryOne } from '@/lib/db';
 
 async function getHandler(req: NextRequest, { params }: { params: { id: string } }) {
+    // Protection for this route is handled by middleware.ts
     const { id } = params;
 
     // Get specific role with its permissions
@@ -27,6 +27,7 @@ async function getHandler(req: NextRequest, { params }: { params: { id: string }
 }
 
 async function patchHandler(req: NextRequest, { params }: { params: { id: string } }) {
+    // Protection for this route is handled by middleware.ts
     const { id } = params;
     const body = await req.json();
 
@@ -94,6 +95,7 @@ async function patchHandler(req: NextRequest, { params }: { params: { id: string
 }
 
 async function deleteHandler(req: NextRequest, { params }: { params: { id: string } }) {
+    // Protection for this route is handled by middleware.ts
     const { id } = params;
 
     // Validate role exists
@@ -115,9 +117,6 @@ async function deleteHandler(req: NextRequest, { params }: { params: { id: strin
         // Remove role permissions
         await query('DELETE FROM role_permissions WHERE role_id = $1', [id]);
 
-        // Remove from audit history (this is optional, you might want to keep it)
-        // await query('DELETE FROM role_assignment_history WHERE role_id = $1', [id]);
-
         // Finally delete the role
         await query('DELETE FROM roles WHERE id = $1', [id]);
 
@@ -129,6 +128,6 @@ async function deleteHandler(req: NextRequest, { params }: { params: { id: strin
     }
 }
 
-export const GET = withRole('admin', getHandler);
-export const PATCH = withRole('admin', patchHandler);
-export const DELETE = withRole('admin', deleteHandler);
+export const GET = getHandler;
+export const PATCH = patchHandler;
+export const DELETE = deleteHandler;

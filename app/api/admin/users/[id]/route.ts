@@ -1,14 +1,14 @@
 // app/api/admin/users/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
-import { withRole } from '@/lib/api/with-authorization';
 import { query, queryOne } from '@/lib/db';
 import { roleService } from '@/lib/services/role-service';
 
 async function getHandler(req: NextRequest, { params }: { params: { id: string } }) {
+    // Protection for this route is handled by middleware.ts
     const { id } = params;
 
-    // Get specific user (admin only)
+    // Get specific user
     const user = await queryOne(
         `SELECT u.id, u.name, u.email, u.email_verified, u.created_at
          FROM users u
@@ -32,6 +32,7 @@ async function getHandler(req: NextRequest, { params }: { params: { id: string }
 }
 
 async function patchHandler(req: NextRequest, { params }: { params: { id: string } }) {
+    // Protection for this route is handled by middleware.ts
     const { id } = params;
     const body = await req.json();
 
@@ -99,6 +100,7 @@ async function patchHandler(req: NextRequest, { params }: { params: { id: string
 }
 
 async function deleteHandler(req: NextRequest, { params }: { params: { id: string } }) {
+    // Protection for this route is handled by middleware.ts
     const { id } = params;
 
     // Check if user exists
@@ -106,17 +108,6 @@ async function deleteHandler(req: NextRequest, { params }: { params: { id: strin
 
     if (!user) {
         return NextResponse.json({ message: 'User not found' }, { status: 404 });
-    }
-
-    // Prevent deletion of the user making the request (admin can't delete themselves)
-    const session = req.headers.get('Session');
-    if (session && JSON.parse(session).user?.id === id) {
-        return NextResponse.json(
-            {
-                message: 'Cannot delete your own account'
-            },
-            { status: 403 }
-        );
     }
 
     try {
@@ -151,6 +142,6 @@ async function deleteHandler(req: NextRequest, { params }: { params: { id: strin
     }
 }
 
-export const GET = withRole('admin', getHandler);
-export const PATCH = withRole('admin', patchHandler);
-export const DELETE = withRole('admin', deleteHandler);
+export const GET = getHandler;
+export const PATCH = patchHandler;
+export const DELETE = deleteHandler;

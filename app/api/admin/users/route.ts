@@ -1,13 +1,13 @@
 // app/api/admin/users/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
-import { withRole } from '@/lib/api/with-authorization';
 import { query } from '@/lib/db';
-import { roleService } from '@/lib/services/role-service';
 import { userService } from '@/lib/services/user-service';
 
 async function getHandler(req: NextRequest) {
-    // Get all users (admin only)
+    // Protection for this route is handled by middleware.ts
+
+    // Get all users
     const users = await query(
         `SELECT u.id, u.name, u.email, u.email_verified, u.created_at,
          array_agg(r.name) FILTER (WHERE r.name IS NOT NULL) as roles
@@ -21,6 +21,7 @@ async function getHandler(req: NextRequest) {
 }
 
 async function postHandler(req: NextRequest) {
+    // Protection for this route is handled by middleware.ts
     try {
         const body = await req.json();
 
@@ -88,5 +89,5 @@ async function postHandler(req: NextRequest) {
     }
 }
 
-export const GET = withRole('admin', getHandler);
-export const POST = withRole('admin', postHandler);
+export const GET = getHandler;
+export const POST = postHandler;

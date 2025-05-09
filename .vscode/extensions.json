@@ -6,6 +6,7 @@
      * See https://go.microsoft.com/fwlink/?LinkId=827846 to learn about workspace recommendations.
      **/
     "recommendations": [
-        "mikestead.dotenv", // ? https://marketplace.visualstudio.com/items?itemName=EditorConfig.EditorConfig
+        "mikestead.dotenv", // https://marketplace.visualstudio.com/items?itemName=mikestead.dotenv
+        "EditorConfig.EditorConfig" // https://marketplace.visualstudio.com/items?itemName=EditorConfig.EditorConfig
     ]
 }

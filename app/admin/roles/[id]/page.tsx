@@ -1,4 +1,4 @@
-// app/(admin)/admin/roles/[id]/page.tsx
+// app/admin/roles/[id]/page.tsx
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 

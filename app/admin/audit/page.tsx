@@ -1,4 +1,4 @@
-// app/(admin)/admin/audit/page.tsx
+// app/admin/audit/page.tsx
 import { Metadata } from 'next';
 
 import { Badge } from '@/components/ui/badge';
@@ -99,5 +99,4 @@ async function AuditLogPage() {
     );
 }
 
-// Protect with role guard
 export default AuditLogPage;

@@ -1,16 +1,17 @@
 // app/api/admin/permissions/route.ts
+// This route now only lists existing predefined permissions.
+// POST for creation is disabled.
 import { NextRequest, NextResponse } from 'next/server';
 
-import { withRole } from '@/lib/api/with-authorization';
-import { query, queryOne } from '@/lib/db';
+import { query } from '@/lib/db';
 
 async function getHandler(req: NextRequest) {
-    // Get all permissions
+    // Protection for this route is handled by middleware.ts
+
+    // Get all predefined permissions and count of roles they are assigned to
     const permissions = await query(
-        `SELECT p.*, 
-          (SELECT array_agg(r.name) FROM roles r 
-           JOIN role_permissions rp ON r.id = rp.role_id 
-           WHERE rp.permission_id = p.id) as roles
+        `SELECT p.id, p.name, p.description, 
+          (SELECT COUNT(rp.role_id) FROM role_permissions rp WHERE rp.permission_id = p.id) as assigned_roles_count
          FROM permissions p
          ORDER BY p.name`
     );
@@ -19,33 +20,13 @@ async function getHandler(req: NextRequest) {
 }
 
 async function postHandler(req: NextRequest) {
-    const body = await req.json();
-
-    if (!body.name) {
-        return NextResponse.json({ message: 'Permission name is required' }, { status: 400 });
-    }
-
-    // Check if permission already exists
-    const existingPermission = await queryOne('SELECT id FROM permissions WHERE name = $1', [body.name]);
-
-    if (existingPermission) {
-        return NextResponse.json({ message: 'Permission already exists' }, { status: 409 });
-    }
-
-    // Create new permission
-    const result = await query(
-        'INSERT INTO permissions (name, description) VALUES ($1, $2) RETURNING id, name, description',
-        [body.name, body.description || null]
-    );
-
+    // Protection for this route is handled by middleware.ts
+    // Creating permissions via API is not supported as they are predefined.
     return NextResponse.json(
-        {
-            message: 'Permission created successfully',
-            permission: result[0]
-        },
-        { status: 201 }
+        { message: 'Creating permissions via API is not supported. Permissions are predefined in sql/init.sql.' },
+        { status: 405 } // Method Not Allowed
     );
 }
 
-export const GET = withRole('admin', getHandler);
-export const POST = withRole('admin', postHandler);
+export const GET = getHandler;
+export const POST = postHandler; // Returns 405

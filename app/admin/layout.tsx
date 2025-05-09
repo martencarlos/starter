@@ -1,4 +1,4 @@
-// app/(admin)/admin/layout.tsx
+// app/admin/layout.tsx
 import { ReactNode } from 'react';
 
 import Link from 'next/link';

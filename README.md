@@ -20,28 +20,28 @@ A modern Next.js 15 starter application with authentication, PostgreSQL database
 
 1. **Clone the repository**
 
-```bash
+\`\`\`bash
 git clone https://github.com/martencarlos/starter
 cd starter
-```
+\`\`\`
 
 2. **Install dependencies**
 
-```bash
+\`\`\`bash
 npm install
-```
+\`\`\`
 
 3. **Set up environment variables**
 
 Copy the `.env.example` file to `.env.local` and update the values:
 
-```bash
+\`\`\`bash
 cp .env.example .env.local
-```
+\`\`\`
 
 Edit `.env.local` with your configuration:
 
-```
+\`\`\`
 # Database - Neon PostgreSQL
 DATABASE_URL='your-neon-database-url'
 
@@ -52,7 +52,7 @@ NEXTAUTH_URL='http://localhost:3000'
 # Email - Nodemailer
 EMAIL_USER='your-email'
 EMAIL_PASSWORD='your-email-password'
-```
+\`\`\`
 
 4. **Initialize the database**
 
@@ -60,9 +60,9 @@ If using Neon, navigate to your dashboard and run the SQL queries from `sql/init
 
 5. **Run the development server**
 
-```bash
+\`\`\`bash
 npm run dev
-```
+\`\`\`
 
 6. **Open the application**
 
@@ -79,7 +79,7 @@ The application uses the following tables:
 
 ## Project Structure
 
-```
+\`\`\`
 ├── app/                 # Next.js application directory
 │   ├── api/             # API routes
 │   ├── auth/            # Authentication pages
@@ -97,7 +97,7 @@ The application uses the following tables:
 ├── sql/                 # SQL scripts
 │   └── init.sql         # Database initialization
 └── ...
-```
+\`\`\`
 
 ## Authentication Flow
 
@@ -112,20 +112,18 @@ This application includes a comprehensive RBAC system that controls access to re
 
 ### Key Features
 
-- **User Roles**: Users can be assigned multiple roles (e.g., admin, user, editor)
-- **Permissions**: Fine-grained permissions are assigned to roles
-- **Multi-level Protection**: 
-  - Server-side route protection
-  - API route middleware
-  - Component-level guards
-  - UI element visibility control
+- **User Roles**: Users can be assigned multiple roles (e.g., `admin`, `user`, `editor`).
+- **Predefined Permissions**: A fixed set of fine-grained permissions (e.g., `read:users`, `manage:roles`) are defined in the system (`sql/init.sql`). These permissions are assigned to roles.
+- **Centralized Protection via Middleware**: `middleware.ts` handles access control for both UI routes and API endpoints based on authentication, roles, and permissions.
+- **Server-Side Checks**: Server components and `authOptions` use `roleService` for RBAC logic.
+- **Client-Side Controls**: Hooks (`useRoles`, `usePermissions`) and components (`WithRole`, `WithPermission`) allow for dynamic UI rendering based on user access.
 
 ### Schema Design
 
 The RBAC system uses the following database tables:
 
 - `roles`: Defines available roles in the system
-- `permissions`: Defines granular permissions
+- `permissions`: Defines the set of available granular permissions (managed via `sql/init.sql`)
 - `user_roles`: Junction table mapping users to roles
 - `role_permissions`: Junction table mapping roles to permissions
 
@@ -136,19 +134,13 @@ The system comes with two default roles:
 - **user**: Basic role assigned to all registered users
 - **admin**: Full system access
 
-### Usage Examples
+### Protection Mechanisms
 
-#### Protecting API Routes
+The primary mechanism for route protection is `middleware.ts`. It checks authentication status, and then verifies if the user has the necessary roles or permissions for the requested path, as defined in its configuration maps.
 
-```typescript
-// Protect with authentication
-export const GET = withAuth(handler);
+Session tokens (JWT) are enriched with user roles and permissions, allowing client-side components and hooks to adapt the UI.
 
-// Protect with role
-export const POST = withRole('admin', handler);
-
-// Protect with permission
-export const PUT = withPermission('update:users', handler);
+Server components can use `roleService` for more granular checks if needed, beyond what the middleware provides at the route level.
 
 ## License
 

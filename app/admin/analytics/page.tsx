@@ -1,4 +1,4 @@
-// app/(admin)/admin/analytics/page.tsx
+// app/admin/analytics/page.tsx
 import { Metadata } from 'next';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

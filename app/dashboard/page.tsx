@@ -3,12 +3,9 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
-import { WithPermission } from '@/components/rbac/with-permission';
-import { WithRole } from '@/components/rbac/with-role';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { authOptions } from '@/lib/auth-options';
-import { query } from '@/lib/db';
 import { roleService } from '@/lib/services/role-service';
 
 import { getServerSession } from 'next-auth/next';
@@ -62,7 +59,7 @@ export default async function DashboardPage() {
                     <Card className='bg-primary/5'>
                         <CardHeader>
                             <CardTitle>Admin Dashboard</CardTitle>
-                            <CardDescription>Manage users, roles and permissions</CardDescription>
+                            <CardDescription>Manage users, roles and system settings</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Button asChild className='w-full'>

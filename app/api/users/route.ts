@@ -1,11 +1,10 @@
 // app/api/users/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
-import { withPermission } from '@/lib/api/with-authorization';
 import { query } from '@/lib/db';
 
 async function handler(req: NextRequest) {
-    // This endpoint is protected with 'read:users' permission
+    // Protection for this route (e.g., 'read:users' permission) is handled by middleware.ts
     const users = await query(
         `SELECT u.id, u.name, u.email, u.email_verified, 
          (SELECT array_agg(r.name) FROM roles r 
@@ -18,5 +17,4 @@ async function handler(req: NextRequest) {
     return NextResponse.json({ users });
 }
 
-// Export the handler with permission check
-export const GET = withPermission('read:users', handler);
+export const GET = handler;
