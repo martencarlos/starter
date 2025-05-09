@@ -1,3 +1,4 @@
+// next.config.mjs
 import type { NextConfig } from 'next';
 
 import initializeBundleAnalyzer from '@next/bundle-analyzer';
@@ -24,6 +25,14 @@ const nextConfig: NextConfig = {
     },
     turbopack: {
         resolveExtensions: ['.mdx', '.tsx', '.ts', '.jsx', '.js', '.mjs', '.json']
+    },
+    // Add configuration for images
+    images: {
+        domains: [
+            'lh3.googleusercontent.com', // Google profile images
+            'avatars.githubusercontent.com', // GitHub profile images (for future use)
+            'ui-avatars.com' // Default avatar service (for future use)
+        ]
     }
 };
 
