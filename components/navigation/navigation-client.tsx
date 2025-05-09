@@ -44,10 +44,11 @@ export function NavigationClient({ initialSession }: NavigationClientProps) {
     };
 
     return (
-        (<header className='bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10 w-full border-b backdrop-blur'>
+        <header className='bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10 w-full border-b backdrop-blur'>
             <div className='container mx-auto flex h-14 items-center justify-between px-4'>
                 <div className='flex items-center gap-4'>
-                    <Link href='/' className='flex items-center gap-2' legacyBehavior>
+                    {/* UPDATED: Removed legacyBehavior */}
+                    <Link href='/' className='flex items-center gap-2'>
                         <span className='text-xl font-bold'>Starter Template</span>
                     </Link>
                     <nav className='hidden items-center gap-6 md:flex'>
@@ -99,7 +100,6 @@ export function NavigationClient({ initialSession }: NavigationClientProps) {
                                         <p className='text-sm font-medium'>{userName || 'User'}</p>
                                         <p className='text-muted-foreground text-xs'>Account</p>
 
-                                        {/* Show roles as badges */}
                                         {session?.user?.roles && session.user.roles.length > 0 && (
                                             <div className='mt-1 flex flex-wrap gap-1'>
                                                 {session.user.roles.map((role) => (
@@ -115,31 +115,24 @@ export function NavigationClient({ initialSession }: NavigationClientProps) {
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem asChild>
-                                    <Link
-                                        href='/dashboard'
-                                        className='flex cursor-pointer items-center'
-                                        legacyBehavior>
+                                    {/* UPDATED: Removed legacyBehavior */}
+                                    <Link href='/dashboard' className='flex cursor-pointer items-center'>
                                         <User className='mr-2 h-4 w-4' />
                                         <span>Dashboard</span>
                                     </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>
-                                    <Link
-                                        href='/profile'
-                                        className='flex cursor-pointer items-center'
-                                        legacyBehavior>
+                                    {/* UPDATED: Removed legacyBehavior */}
+                                    <Link href='/profile' className='flex cursor-pointer items-center'>
                                         <Settings className='mr-2 h-4 w-4' />
                                         <span>Profile Settings</span>
                                     </Link>
                                 </DropdownMenuItem>
 
-                                {/* Admin menu item - only visible for users with admin role */}
                                 <WithRole role='admin'>
                                     <DropdownMenuItem asChild>
-                                        <Link
-                                            href='/admin/users'
-                                            className='flex cursor-pointer items-center'
-                                            legacyBehavior>
+                                        {/* UPDATED: Removed legacyBehavior */}
+                                        <Link href='/admin/users' className='flex cursor-pointer items-center'>
                                             <Shield className='mr-2 h-4 w-4' />
                                             <span>Admin Dashboard</span>
                                         </Link>
@@ -167,6 +160,6 @@ export function NavigationClient({ initialSession }: NavigationClientProps) {
                     )}
                 </div>
             </div>
-        </header>)
+        </header>
     );
 }
