@@ -39,8 +39,7 @@ export function RegisterForm() {
                 body: JSON.stringify({
                     name: data.name,
                     email: data.email,
-                    password: data.password,
-                    confirmPassword: data.confirmPassword // Added the confirmPassword field
+                    password: data.password
                 })
             });
 

@@ -36,8 +36,6 @@
     "**/*.ts",
     "**/*.tsx",
     "next-env.d.ts",
-    // ".next/types/**/*.ts", // Removed to avoid matching non-existent files
-    "scripts/create-admin.js",
     ".next/types/**/*.ts"
   ],
   "exclude": [

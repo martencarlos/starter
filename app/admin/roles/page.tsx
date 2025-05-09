@@ -1,16 +1,11 @@
 // app/(admin)/admin/roles/page.tsx
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { authOptions } from '@/lib/auth-options';
 import { query } from '@/lib/db';
-import { roleService } from '@/lib/services/role-service';
-
-import { getServerSession } from 'next-auth/next';
 
 export const metadata: Metadata = {
     title: 'Admin - Roles',
@@ -18,19 +13,6 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminRolesPage() {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-        redirect('/login?callbackUrl=/admin/roles');
-    }
-
-    // Check if user has admin role
-    const isAdmin = await roleService.hasRole(session.user.id, 'admin');
-
-    if (!isAdmin) {
-        redirect('/dashboard');
-    }
-
     // Fetch all roles with their permissions
     const roles = await query(
         `SELECT r.id, r.name, r.description,

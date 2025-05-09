@@ -3,7 +3,6 @@ import { Metadata } from 'next';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { query } from '@/lib/db';
-import { withRoleGuard } from '@/lib/rbac/with-role-guard';
 
 import { CalendarIcon, KeyIcon, ShieldCheckIcon, UsersIcon } from 'lucide-react';
 
@@ -91,5 +90,4 @@ async function AdminAnalyticsPage() {
     );
 }
 
-// No need for withRoleGuard here since the admin layout already checks for the admin role
 export default AdminAnalyticsPage;
