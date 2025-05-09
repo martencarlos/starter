@@ -11,9 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function EditPermissionPage({ params }: { params: { id: string } }) {
-    const { id } = params;
-
-    // Check if user has admin rol
+    const { id } = await params;
 
     // Fetch permission with assigned roles
     const permission = await queryOne(
