@@ -3,11 +3,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import PermissionForm from '@/components/admin/permission-form';
-import { authOptions } from '@/lib/auth-options';
 import { query, queryOne } from '@/lib/db';
-import { roleService } from '@/lib/services/role-service';
-
-import { getServerSession } from 'next-auth/next';
 
 export const metadata: Metadata = {
     title: 'Admin - Edit Permission',
@@ -16,18 +12,8 @@ export const metadata: Metadata = {
 
 export default async function EditPermissionPage({ params }: { params: { id: string } }) {
     const { id } = params;
-    const session = await getServerSession(authOptions);
 
-    if (!session?.user) {
-        return notFound();
-    }
-
-    // Check if user has admin role
-    const isAdmin = await roleService.hasRole(session.user.id, 'admin');
-
-    if (!isAdmin) {
-        return notFound();
-    }
+    // Check if user has admin rol
 
     // Fetch permission with assigned roles
     const permission = await queryOne(

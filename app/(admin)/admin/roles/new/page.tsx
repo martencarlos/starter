@@ -1,13 +1,8 @@
 // app/(admin)/admin/roles/new/page.tsx
 import { Metadata } from 'next';
-import { redirect } from 'next/navigation';
 
 import RoleForm from '@/components/admin/role-form';
-import { authOptions } from '@/lib/auth-options';
 import { query } from '@/lib/db';
-import { roleService } from '@/lib/services/role-service';
-
-import { getServerSession } from 'next-auth/next';
 
 export const metadata: Metadata = {
     title: 'Admin - Create Role',
@@ -15,19 +10,6 @@ export const metadata: Metadata = {
 };
 
 export default async function CreateRolePage() {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-        redirect('/login?callbackUrl=/admin/roles/new');
-    }
-
-    // Check if user has admin role
-    const isAdmin = await roleService.hasRole(session.user.id, 'admin');
-
-    if (!isAdmin) {
-        redirect('/dashboard');
-    }
-
     // Get all permissions for the form
     const allPermissions = await query('SELECT id, name, description FROM permissions ORDER BY name');
 

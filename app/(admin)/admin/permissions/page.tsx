@@ -1,15 +1,10 @@
 // app/(admin)/admin/permissions/page.tsx
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { authOptions } from '@/lib/auth-options';
 import { query } from '@/lib/db';
-import { roleService } from '@/lib/services/role-service';
-
-import { getServerSession } from 'next-auth/next';
 
 export const metadata: Metadata = {
     title: 'Admin - Permissions',
@@ -17,19 +12,6 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminPermissionsPage() {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-        redirect('/login?callbackUrl=/admin/permissions');
-    }
-
-    // Check if user has admin role
-    const isAdmin = await roleService.hasRole(session.user.id, 'admin');
-
-    if (!isAdmin) {
-        redirect('/dashboard');
-    }
-
     // Fetch all permissions with role counts
     const permissions = await query(
         `SELECT p.id, p.name, p.description, 

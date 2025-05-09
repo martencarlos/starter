@@ -4,7 +4,6 @@ import { Metadata } from 'next';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { query } from '@/lib/db';
-import { withRoleGuard } from '@/lib/rbac/with-role-guard';
 
 import { formatDistanceToNow } from 'date-fns';
 
@@ -101,4 +100,4 @@ async function AuditLogPage() {
 }
 
 // Protect with role guard
-export default withRoleGuard(AuditLogPage, 'admin');
+export default AuditLogPage;
