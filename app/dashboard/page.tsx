@@ -63,7 +63,7 @@ export default async function DashboardPage() {
                         </CardHeader>
                         <CardContent>
                             <Button asChild className='w-full'>
-                                <Link href='/admin/users'>Go to Admin Panel</Link>
+                                <Link href='/admin/view?tab=users'>Go to Admin Panel</Link>
                             </Button>
                         </CardContent>
                     </Card>

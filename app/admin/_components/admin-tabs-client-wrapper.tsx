@@ -1,12 +1,15 @@
 // app/admin/_components/admin-tabs-client-wrapper.tsx
 'use client';
 
-import { ReactNode, Suspense } from 'react';
+import { ReactNode, Suspense, useEffect } from 'react';
 
+// Added useEffect
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+// app/admin/_components/admin-tabs-client-wrapper.tsx
 
 // app/admin/_components/admin-tabs-client-wrapper.tsx
 
@@ -21,6 +24,15 @@ interface AdminTabsClientWrapperProps {
 }
 
 const validTabs = ['users', 'roles', 'permissions', 'analytics', 'audit'];
+
+const tabMetadata: Record<string, { title: string; description: string }> = {
+    users: { title: 'Admin - User Management', description: 'Manage system users and their roles.' },
+    roles: { title: 'Admin - Role Management', description: 'Manage roles and their assigned permissions.' },
+    permissions: { title: 'Admin - View Permissions', description: 'View predefined system permissions.' },
+    analytics: { title: 'Admin - System Analytics', description: 'View system analytics and metrics.' },
+    audit: { title: 'Admin - Audit Log', description: 'Review system audit logs and activity.' },
+    default: { title: 'Admin Dashboard', description: 'System administration and management.' }
+};
 
 export default function AdminTabsClientWrapper({
     usersContent,
@@ -40,6 +52,12 @@ export default function AdminTabsClientWrapper({
         const newPath = `${pathname}?tab=${value}`;
         router.replace(newPath, { shallow: true });
     };
+
+    // Update document title on client-side tab change
+    useEffect(() => {
+        const metadata = tabMetadata[activeTab] || tabMetadata.default;
+        document.title = metadata.title;
+    }, [activeTab]);
 
     // Helper for Suspense fallback
     const TabSkeleton = () => (
