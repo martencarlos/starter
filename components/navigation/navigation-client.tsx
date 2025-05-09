@@ -23,6 +23,10 @@ import { signOut, useSession } from 'next-auth/react';
 
 // components/navigation/navigation-client.tsx
 
+// components/navigation/navigation-client.tsx
+
+// components/navigation/navigation-client.tsx
+
 interface NavigationClientProps {
     initialSession: Session | null;
 }
@@ -47,7 +51,6 @@ export function NavigationClient({ initialSession }: NavigationClientProps) {
         <header className='bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10 w-full border-b backdrop-blur'>
             <div className='container mx-auto flex h-14 items-center justify-between px-4'>
                 <div className='flex items-center gap-4'>
-                    {/* UPDATED: Removed legacyBehavior */}
                     <Link href='/' className='flex items-center gap-2'>
                         <span className='text-xl font-bold'>Starter Template</span>
                     </Link>
@@ -115,14 +118,12 @@ export function NavigationClient({ initialSession }: NavigationClientProps) {
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem asChild>
-                                    {/* UPDATED: Removed legacyBehavior */}
                                     <Link href='/dashboard' className='flex cursor-pointer items-center'>
                                         <User className='mr-2 h-4 w-4' />
                                         <span>Dashboard</span>
                                     </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>
-                                    {/* UPDATED: Removed legacyBehavior */}
                                     <Link href='/profile' className='flex cursor-pointer items-center'>
                                         <Settings className='mr-2 h-4 w-4' />
                                         <span>Profile Settings</span>
@@ -131,7 +132,6 @@ export function NavigationClient({ initialSession }: NavigationClientProps) {
 
                                 <WithRole role='admin'>
                                     <DropdownMenuItem asChild>
-                                        {/* UPDATED: Removed legacyBehavior */}
                                         <Link href='/admin/users' className='flex cursor-pointer items-center'>
                                             <Shield className='mr-2 h-4 w-4' />
                                             <span>Admin Dashboard</span>
