@@ -1,18 +1,10 @@
-// app/admin/analytics/page.tsx
-import { Metadata } from 'next';
-
+// app/admin/_components/analytics-tab.tsx
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { query } from '@/lib/db';
 
 import { CalendarIcon, KeyIcon, ShieldCheckIcon, UsersIcon } from 'lucide-react';
 
-export const metadata: Metadata = {
-    title: 'Admin - Analytics',
-    description: 'System analytics and metrics'
-};
-
-async function AdminAnalyticsPage() {
-    // Get system statistics
+export default async function AnalyticsTab() {
     const stats = await query(`
         SELECT
             (SELECT COUNT(*) FROM users) as total_users,
@@ -79,7 +71,6 @@ async function AdminAnalyticsPage() {
                 </Card>
             </div>
 
-            {/* Additional analytics sections can be added here */}
             <div className='mt-10'>
                 <h3 className='mb-4 text-xl font-medium'>System Activity</h3>
                 <p className='text-muted-foreground'>
@@ -89,5 +80,3 @@ async function AdminAnalyticsPage() {
         </div>
     );
 }
-
-export default AdminAnalyticsPage;

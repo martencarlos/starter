@@ -1,5 +1,4 @@
-// app/admin/users/page.tsx
-import { Metadata } from 'next';
+// app/admin/_components/users-tab.tsx
 import Link from 'next/link';
 
 import { Badge } from '@/components/ui/badge';
@@ -7,13 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { query } from '@/lib/db';
 
-export const metadata: Metadata = {
-    title: 'Admin - Users',
-    description: 'Manage users'
-};
-
-export default async function AdminUsersPage() {
-    // Fetch all users with their roles
+export default async function UsersTab() {
     const users = await query(
         `SELECT u.id, u.name, u.email, u.email_verified, u.created_at,
          array_agg(r.name) as roles

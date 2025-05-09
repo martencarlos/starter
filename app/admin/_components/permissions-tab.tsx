@@ -1,17 +1,8 @@
-// app/admin/permissions/page.tsx
-// This page is modified to only list predefined permissions. Management (add/edit/delete) is removed.
-import { Metadata } from 'next';
-
+// app/admin/_components/permissions-tab.tsx
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { query } from '@/lib/db';
 
-export const metadata: Metadata = {
-    title: 'Admin - Predefined Permissions',
-    description: 'View system-defined permissions'
-};
-
-export default async function AdminPermissionsPage() {
-    // Fetch all permissions with role counts
+export default async function PermissionsTab() {
     const permissions = await query(
         `SELECT p.id, p.name, p.description, 
           (SELECT COUNT(*) FROM role_permissions WHERE permission_id = p.id) as role_count

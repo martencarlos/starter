@@ -1,5 +1,4 @@
-// app/admin/roles/page.tsx
-import { Metadata } from 'next';
+// app/admin/_components/roles-tab.tsx
 import Link from 'next/link';
 
 import { Badge } from '@/components/ui/badge';
@@ -7,13 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { query } from '@/lib/db';
 
-export const metadata: Metadata = {
-    title: 'Admin - Roles',
-    description: 'Manage roles'
-};
-
-export default async function AdminRolesPage() {
-    // Fetch all roles with their permissions
+export default async function RolesTab() {
     const roles = await query(
         `SELECT r.id, r.name, r.description,
          array_agg(p.name) FILTER (WHERE p.name IS NOT NULL) as permissions

@@ -23,6 +23,14 @@ import { signOut, useSession } from 'next-auth/react';
 
 // components/navigation/navigation-client.tsx
 
+// components/navigation/navigation-client.tsx
+
+// components/navigation/navigation-client.tsx
+
+// components/navigation/navigation-client.tsx
+
+// components/navigation/navigation-client.tsx
+
 interface NavigationClientProps {
     initialSession: Session | null;
 }
@@ -71,7 +79,7 @@ export function NavigationClient({ initialSession }: NavigationClientProps) {
                                 {/* Admin links - only visible for users with admin role */}
                                 <WithRole role='admin'>
                                     <Link
-                                        href='/admin/users'
+                                        href='/admin'
                                         className={`hover:text-primary text-sm transition-colors ${
                                             pathname.startsWith('/admin')
                                                 ? 'text-primary font-medium'
@@ -128,13 +136,15 @@ export function NavigationClient({ initialSession }: NavigationClientProps) {
 
                                 <WithRole role='admin'>
                                     <DropdownMenuItem asChild>
-                                        <Link href='/admin/users' className='flex cursor-pointer items-center'>
+                                        <Link href='/admin/view?tab=users' className='flex cursor-pointer items-center'>
                                             <Shield className='mr-2 h-4 w-4' />
                                             <span>Admin Dashboard</span>
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild>
-                                        <Link href='/admin/analytics' className='flex cursor-pointer items-center'>
+                                        <Link
+                                            href='/admin/view?tab=analytics'
+                                            className='flex cursor-pointer items-center'>
                                             <BarChart className='mr-2 h-4 w-4' />
                                             <span>System Analytics</span>
                                         </Link>

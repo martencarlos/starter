@@ -1,33 +1,44 @@
 // app/admin/layout.tsx
 import { ReactNode } from 'react';
 
+import { Metadata } from 'next';
 import Link from 'next/link';
+// Keep for main title link if needed
 import { redirect } from 'next/navigation';
 
-import { AdminTabs } from '@/components/admin/admin-tabs';
 import { authOptions } from '@/lib/auth-options';
 import { roleService } from '@/lib/services/role-service';
 
 import { getServerSession } from 'next-auth/next';
 
+// It's good practice to have a general metadata for the layout
+export const metadata: Metadata = {
+    title: 'Admin', // Base title for admin section
+    description: 'Administration Dashboard'
+};
+
 export default async function AdminLayout({ children }: { children: ReactNode }) {
     const session = await getServerSession(authOptions);
 
     if (!session) {
-        redirect('/login?callbackUrl=/admin');
+        // If accessing /admin/* directly, preserve the full path
+        // The callbackUrl should be dynamic based on the attempted access path
+        // This logic is likely handled by middleware.ts, but good to be robust.
+        redirect('/login?callbackUrl=/admin/view'); // Redirect to the new default admin view
     }
 
-    // Check if user has admin role
     const isAdmin = await roleService.hasRole(session.user.id, 'admin');
 
     if (!isAdmin) {
-        redirect('/dashboard');
+        // If not an admin, redirect to a general dashboard or access denied page
+        redirect('/dashboard'); // Or '/access-denied' if preferred
     }
 
     return (
         <div className='container mx-auto px-4 py-8'>
             <h1 className='mb-6 text-3xl font-bold'>Admin Dashboard</h1>
-            <AdminTabs>{children}</AdminTabs>
+            {/* The children will be app/admin/view/page.tsx or specific pages like app/admin/roles/[id]/page.tsx */}
+            {children}
         </div>
     );
 }
