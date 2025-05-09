@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { WithRole } from '@/components/rbac/with-role';
+// Added Skeleton import
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,11 +16,14 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
+import { Skeleton } from '@/components/ui/skeleton';
 import { UserAvatar } from '@/components/ui/user-avatar';
 
 import { BarChart, LogOut, Settings, Shield, User } from 'lucide-react';
 import { Session } from 'next-auth';
 import { signOut, useSession } from 'next-auth/react';
+
+// components/navigation/navigation-client.tsx
 
 // components/navigation/navigation-client.tsx
 
@@ -39,8 +43,10 @@ export function NavigationClient({ initialSession }: NavigationClientProps) {
     const pathname = usePathname();
     const { data: sessionData, status } = useSession();
 
-    const session = sessionData || initialSession;
-    const isAuthenticated = !!session;
+    // Prefer live session data, fall back to initialSession, then null
+    const session = sessionData ?? initialSession;
+    const isLoadingSession = status === 'loading' && !initialSession; // Show loading only if client is fetching and no initial data
+
     const userName = session?.user?.name;
 
     const isActive = (path: string) => {
@@ -59,7 +65,7 @@ export function NavigationClient({ initialSession }: NavigationClientProps) {
                         <span className='text-xl font-bold'>Starter Template</span>
                     </Link>
                     <nav className='hidden items-center gap-6 md:flex'>
-                        {isAuthenticated && (
+                        {session && ( // Only show these links if session is resolved and exists
                             <>
                                 <Link
                                     href='/dashboard'
@@ -96,10 +102,15 @@ export function NavigationClient({ initialSession }: NavigationClientProps) {
                 <div className='flex items-center gap-4'>
                     <ThemeToggle />
 
-                    {isAuthenticated ? (
+                    {isLoadingSession ? (
+                        <div className='flex items-center gap-2'>
+                            <Skeleton className='h-8 w-20 rounded-md' /> {/* Sign in button placeholder */}
+                            <Skeleton className='h-8 w-8 rounded-full' /> {/* Avatar placeholder */}
+                        </div>
+                    ) : session ? (
                         <DropdownMenu>
                             <DropdownMenuTrigger className='focus:outline-none'>
-                                <UserAvatar name={userName} size='sm' />
+                                <UserAvatar name={userName} imageUrl={session.user?.image} size='sm' />
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align='end' className='w-56'>
                                 <DropdownMenuLabel>
