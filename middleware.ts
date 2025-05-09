@@ -7,9 +7,7 @@ import { getToken } from 'next-auth/jwt';
 // Map of paths to required permissions
 const PERMISSION_REQUIREMENTS: Record<string, string> = {
     '/users': 'read:users',
-    '/reports': 'read:reports',
-    '/api/users': 'read:users',
-    '/api/reports': 'read:reports'
+    '/api/users': 'read:users'
 };
 
 // Map of paths to required roles
@@ -27,17 +25,11 @@ export async function middleware(request: NextRequest) {
     // Define public paths that don't require authentication
     const publicPaths = [
         '/', // Root path (homepage)
-        '/home', // Main homepage if separate from root
-        '/about',
-        '/contact',
-        '/pricing',
-        '/features',
         '/login',
         '/register',
         '/forgot-password',
         '/reset-password',
         '/verify-email',
-        // Add any other public paths here
         '/api/auth' // NextAuth API routes
     ];
 
