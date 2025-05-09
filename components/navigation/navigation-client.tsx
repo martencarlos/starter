@@ -17,13 +17,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/ui/user-avatar';
 
-import { LogOut, Settings, Shield, User } from 'lucide-react';
+import { BarChart, LogOut, Settings, Shield, User } from 'lucide-react';
 import { Session } from 'next-auth';
 import { signOut, useSession } from 'next-auth/react';
-
-// components/navigation/navigation-client.tsx
-
-// components/navigation/navigation-client.tsx
 
 // components/navigation/navigation-client.tsx
 
@@ -135,6 +131,12 @@ export function NavigationClient({ initialSession }: NavigationClientProps) {
                                         <Link href='/admin/users' className='flex cursor-pointer items-center'>
                                             <Shield className='mr-2 h-4 w-4' />
                                             <span>Admin Dashboard</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <Link href='/admin/analytics' className='flex cursor-pointer items-center'>
+                                            <BarChart className='mr-2 h-4 w-4' />
+                                            <span>System Analytics</span>
                                         </Link>
                                     </DropdownMenuItem>
                                 </WithRole>

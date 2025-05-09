@@ -26,8 +26,11 @@ async function AdminAnalyticsPage() {
     const { total_users, verified_users, roles_count, permissions_count, active_sessions } = stats[0];
 
     return (
-        <div className='container mx-auto px-4 py-8'>
-            <h1 className='mb-8 text-3xl font-bold'>System Analytics</h1>
+        <div className='bg-card rounded-lg border p-6 shadow-sm'>
+            <div className='mb-6'>
+                <h2 className='text-2xl font-semibold'>System Analytics</h2>
+                <p className='text-muted-foreground text-sm'>Overview of system metrics and statistics</p>
+            </div>
 
             <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4'>
                 <Card>
@@ -77,10 +80,16 @@ async function AdminAnalyticsPage() {
                 </Card>
             </div>
 
-            {/* Additional analytics content would go here */}
+            {/* Additional analytics sections can be added here */}
+            <div className='mt-10'>
+                <h3 className='mb-4 text-xl font-medium'>System Activity</h3>
+                <p className='text-muted-foreground'>
+                    Additional analytics visualizations and data can be displayed here.
+                </p>
+            </div>
         </div>
     );
 }
 
-// Protect this page with role guard
-export default withRoleGuard(AdminAnalyticsPage, 'admin');
+// No need for withRoleGuard here since the admin layout already checks for the admin role
+export default AdminAnalyticsPage;

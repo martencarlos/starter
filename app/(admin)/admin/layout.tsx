@@ -4,7 +4,7 @@ import { ReactNode } from 'react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AdminTabs } from '@/components/admin/admin-tabs';
 import { authOptions } from '@/lib/auth-options';
 import { roleService } from '@/lib/services/role-service';
 
@@ -27,21 +27,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     return (
         <div className='container mx-auto px-4 py-8'>
             <h1 className='mb-6 text-3xl font-bold'>Admin Dashboard</h1>
-            <Tabs defaultValue='users' className='w-full'>
-                <TabsList className='mb-8'>
-                    <Link href='/admin/users'>
-                        <TabsTrigger value='users'>Users</TabsTrigger>
-                    </Link>
-                    <Link href='/admin/roles'>
-                        <TabsTrigger value='roles'>Roles</TabsTrigger>
-                    </Link>
-                    <Link href='/admin/permissions'>
-                        <TabsTrigger value='permissions'>Permissions</TabsTrigger>
-                    </Link>
-                </TabsList>
-
-                {children}
-            </Tabs>
+            <AdminTabs>{children}</AdminTabs>
         </div>
     );
 }

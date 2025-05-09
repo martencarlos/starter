@@ -1,4 +1,4 @@
-// app/dashboard/page.tsx (update)
+// app/dashboard/page.tsx
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -71,51 +71,6 @@ export default async function DashboardPage() {
                         </CardContent>
                     </Card>
                 )}
-
-                {/* Client-side role check example (will be hydrated after page load) */}
-                <WithRole role='admin'>
-                    <Card className='bg-secondary/5'>
-                        <CardHeader>
-                            <CardTitle>System Analytics</CardTitle>
-                            <CardDescription>View system performance and metrics</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Button asChild variant='secondary' className='w-full'>
-                                <Link href='/admin/analytics'>View Analytics</Link>
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </WithRole>
-
-                {/* Permission-based component (client-side) */}
-                <WithPermission permission='read:users'>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>User Directory</CardTitle>
-                            <CardDescription>Browse the user directory</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Button asChild variant='outline' className='w-full'>
-                                <Link href='/users'>View Directory</Link>
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </WithPermission>
-
-                {/* Permission-based component (client-side) */}
-                <WithPermission permission='create:users'>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>User Management</CardTitle>
-                            <CardDescription>Create and manage users</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Button asChild variant='outline' className='w-full'>
-                                <Link href='/admin/users/new'>Create User</Link>
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </WithPermission>
 
                 {/* Always visible card */}
                 <Card>
