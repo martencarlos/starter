@@ -82,6 +82,7 @@ export const authOptions: NextAuthOptions = {
                     id: user.id,
                     email: user.email,
                     name: user.name
+                    // email_verified and created_at will be fetched in jwt callback
                 };
             }
         })
@@ -130,8 +131,6 @@ export const authOptions: NextAuthOptions = {
 
                         if (result.length > 0) {
                             user.id = result[0].id;
-
-                            // Create a session record
                             await createSessionRecord(result[0].id, account.access_token);
                         }
                     } else {
@@ -150,10 +149,7 @@ export const authOptions: NextAuthOptions = {
                                 emailUser[0].id
                             ]
                         );
-
                         user.id = emailUser[0].id;
-
-                        // Create a session record
                         await createSessionRecord(emailUser[0].id, account.access_token);
                     }
                 } else if (existingUser.length > 0) {
@@ -169,82 +165,78 @@ export const authOptions: NextAuthOptions = {
                             existingUser[0].id
                         ]
                     );
-
                     user.id = existingUser[0].id;
-
-                    // Create a session record
                     await createSessionRecord(existingUser[0].id, account.access_token);
                 }
             }
+            // For credentials provider, session record is created in authorize step if successful
 
             return true;
         },
         async jwt({ token, user, account, trigger, session }) {
-            // Initial sign in
-            if (user) {
-                token.id = user.id;
-                token.name = user.name;
-                token.email = user.email;
+            // Initial sign in (user object is present) or account linking
+            if (user?.id && (account || trigger === 'signIn' || trigger === 'signUp')) {
+                token.id = user.id; // Ensure token.id is set from the user object
 
-                // Add roles to the token
+                // Fetch comprehensive user data from DB to populate the token
+                const dbUser = await queryOne<{
+                    id: string;
+                    name: string;
+                    email: string;
+                    created_at: Date;
+                    email_verified: boolean;
+                    oauth_provider: string | null;
+                }>(
+                    'SELECT id, name, email, created_at, email_verified, oauth_provider FROM users WHERE id = $1',
+                    [user.id] // Use user.id which is guaranteed by this point
+                );
+
+                if (dbUser) {
+                    token.name = dbUser.name;
+                    token.email = dbUser.email;
+                    token.createdAt = dbUser.created_at.toISOString(); // Store as ISO string
+                    token.emailVerified = dbUser.email_verified;
+                    token.oauthProvider = dbUser.oauth_provider; // This is from our DB
+                }
+
+                // Add roles and permissions
                 const roles = await roleService.getUserRoles(user.id);
-                token.roles = roles.map((role) => role.name);
-
-                // Add permissions to the token
+                token.roles = roles.map((r) => r.name);
                 const permissions = await roleService.getUserPermissions(user.id);
-                token.permissions = permissions.map((permission) => permission.name);
+                token.permissions = permissions.map((p) => p.name);
 
                 if (account) {
-                    token.provider = account.provider;
+                    // Specific to OAuth provider flow
+                    token.provider = account.provider; // This is NextAuth's own provider field
                 }
             }
 
-            // If this is an update event, refresh the user data from the database
-            if (trigger === 'update' && session?.name) {
-                token.name = session.name;
-
-                // Re-fetch roles and permissions on update
-                if (token.id) {
-                    const roles = await roleService.getUserRoles(token.id);
-                    token.roles = roles.map((role) => role.name);
-
-                    const permissions = await roleService.getUserPermissions(token.id);
-                    token.permissions = permissions.map((permission) => permission.name);
+            // Handle session updates triggered by useSession().update()
+            if (trigger === 'update') {
+                if (session?.name) {
+                    token.name = session.name;
                 }
-            }
-
-            // Always refresh user data on token creation/update
-            if (token.id) {
-                try {
-                    const refreshedUser = await queryOne<{
-                        id: string;
-                        name: string;
-                        email: string;
-                    }>('SELECT id, name, email FROM users WHERE id = $1', [token.id]);
-
-                    if (refreshedUser) {
-                        token.name = refreshedUser.name;
-                        token.email = refreshedUser.email;
-                    }
-                } catch (error) {
-                    console.error('Error refreshing user data in JWT callback:', error);
-                }
+                // Potentially update other fields if passed in `session` argument of `update()`
+                // For example, if roles were updated and passed:
+                // if (session?.roles) token.roles = session.roles;
             }
 
             return token;
         },
         async session({ session, token }) {
-            return {
-                ...session,
-                user: {
-                    ...session.user,
-                    id: token.id,
-                    name: token.name,
-                    email: token.email,
-                    roles: token.roles || [],
-                    permissions: token.permissions || []
-                }
-            };
+            // Spread token properties to session.user
+            // Ensure all properties defined in types/next-auth.d.ts for session.user are mapped here
+            session.user.id = token.id;
+            session.user.name = token.name;
+            session.user.email = token.email;
+            session.user.roles = token.roles || [];
+            session.user.permissions = token.permissions || [];
+            session.user.createdAt = token.createdAt;
+            session.user.emailVerified = token.emailVerified;
+            session.user.oauthProvider = token.oauthProvider;
+            // session.user.image may come from token if populated by OAuth provider
+
+            return session;
         }
     },
     events: {
@@ -252,14 +244,24 @@ export const authOptions: NextAuthOptions = {
             try {
                 // Delete the session record when user signs out
                 if (token?.id) {
+                    // Assuming session_token in user_sessions might be different from JWT sub/jti.
+                    // If using NextAuth database adapter, it handles session deletion.
+                    // For custom session table, decide if you clear all sessions for user or specific one.
+                    // The current createSessionRecord uses a new token or access_token, not JWT's jti.
+                    // For simplicity, let's assume we might want to clear all sessions for the user on sign out.
+                    // Or, if the JWT `token` object had the specific `session_token` used for the DB record, use that.
+                    // Given `createSessionRecord` might use `account.access_token` for OAuth, or a new random token for credentials,
+                    // a simple `DELETE FROM user_sessions WHERE user_id = $1` is safer for now.
                     await query('DELETE FROM user_sessions WHERE user_id = $1', [token.id]);
                 }
             } catch (error) {
-                console.error('Error removing session record:', error);
+                console.error('Error removing session record(s):', error);
             }
         },
         async updateUser(message) {
-            console.log('User updated event triggered:', message);
+            // This event is typically used with database adapters.
+            // If you call `update({ name: "New Name" })` on client, `jwt` callback's `trigger` will be 'update'.
+            console.log('User updated event (message):', message);
         }
     },
     secret: process.env.NEXTAUTH_SECRET

@@ -11,6 +11,8 @@ import { toast } from 'sonner';
 
 // components/profile/profile-content.tsx
 
+// components/profile/profile-content.tsx
+
 interface ProfileContentProps {
     user: {
         id: string;
@@ -18,6 +20,10 @@ interface ProfileContentProps {
         email?: string | null;
         image?: string | null;
         roles?: string[];
+        // Added fields
+        createdAt?: string | null; // ISO date string
+        emailVerified?: boolean | null;
+        oauthProvider?: string | null;
     };
 }
 
@@ -35,8 +41,6 @@ export default function ProfileContent({ user }: ProfileContentProps) {
             <div className='mb-8 flex items-center justify-between'>
                 <div>
                     <h1 className='text-3xl font-bold'>Profile Settings</h1>
-
-                    {/* Display user roles as badges */}
                     {user.roles && user.roles.length > 0 && (
                         <div className='mt-2 flex flex-wrap gap-2'>
                             {user.roles.map((role) => (
@@ -48,6 +52,43 @@ export default function ProfileContent({ user }: ProfileContentProps) {
                     )}
                 </div>
                 <UserAvatar name={user.name} imageUrl={user.image} size='lg' />
+            </div>
+
+            {/* Account Overview Section */}
+            <div className='mb-8'>
+                <div className='bg-card rounded-lg border p-6 shadow-sm'>
+                    <h2 className='mb-4 text-xl font-semibold'>Account Overview</h2>
+                    <div className='grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2'>
+                        <div>
+                            <p className='text-muted-foreground text-sm font-medium'>User ID</p>
+                            <p className='text-sm break-all'>{user.id}</p>
+                        </div>
+                        {user.createdAt && (
+                            <div>
+                                <p className='text-muted-foreground text-sm font-medium'>Member Since</p>
+                                <p className='text-sm'>
+                                    {new Date(user.createdAt).toLocaleDateString(undefined, {
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric'
+                                    })}
+                                </p>
+                            </div>
+                        )}
+                        <div>
+                            <p className='text-muted-foreground text-sm font-medium'>Email Status</p>
+                            <Badge variant={user.emailVerified ? 'default' : 'secondary'}>
+                                {user.emailVerified ? 'Verified' : 'Not Verified'}
+                            </Badge>
+                        </div>
+                        {user.oauthProvider && (
+                            <div>
+                                <p className='text-muted-foreground text-sm font-medium'>Connected Account</p>
+                                <p className='text-sm capitalize'>{user.oauthProvider}</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
 
             <Tabs defaultValue='account' className='w-full'>

@@ -22,7 +22,7 @@ export default async function SupportPage({ searchParams }: { searchParams?: { t
     // If not, the SupportContent component will handle unauthenticated users
 
     // Check if there's a tab query parameter
-    let initialTab = await searchParams?.tab;
+    let initialTab = searchParams?.tab;
 
     // Determine the effective initial tab
     if (isAdmin) {

@@ -15,6 +15,29 @@ export default function ProfileLoading() {
                 <Skeleton className='h-12 w-12 rounded-full' />
             </div>
 
+            {/* Skeleton for Account Overview Section */}
+            <div className='bg-card mb-8 rounded-lg border p-6 shadow-sm'>
+                <Skeleton className='mb-4 h-6 w-1/3' /> {/* Account Overview title */}
+                <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                    <div>
+                        <Skeleton className='mb-1 h-4 w-1/4' /> {/* Label */}
+                        <Skeleton className='h-4 w-full' /> {/* Value User ID is long */}
+                    </div>
+                    <div>
+                        <Skeleton className='mb-1 h-4 w-1/3' /> {/* Label Member Since */}
+                        <Skeleton className='h-4 w-1/2' /> {/* Value */}
+                    </div>
+                    <div>
+                        <Skeleton className='mb-1 h-4 w-1/4' /> {/* Label Email Status */}
+                        <Skeleton className='h-6 w-20 rounded-full' /> {/* Badge */}
+                    </div>
+                    <div>
+                        <Skeleton className='mb-1 h-4 w-1/3' /> {/* Label Connected Account */}
+                        <Skeleton className='h-4 w-1/3' /> {/* Value */}
+                    </div>
+                </div>
+            </div>
+
             <div className='bg-card rounded-lg border shadow-sm'>
                 <div className='mb-6 flex space-x-1 p-4'>
                     <Skeleton className='h-10 w-32 rounded-md' />
