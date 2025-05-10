@@ -35,7 +35,11 @@ const formatDate = (dateString: string) => {
     });
 };
 
-export function TicketHistory() {
+interface TicketHistoryProps {
+    onSwitchToContactTab?: () => void;
+}
+
+export function TicketHistory({ onSwitchToContactTab }: TicketHistoryProps) {
     const { tickets, isLoading, error, refreshTickets } = useSupport();
     const [activeStatus, setActiveStatus] = useState<'all' | 'open' | 'closed'>('all');
     const [refreshing, setRefreshing] = useState(false);
@@ -67,11 +71,9 @@ export function TicketHistory() {
                             <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
                             Refresh
                         </Button>
-                        <Button asChild size='sm'>
-                            <Link href='/support?tab=contact'>
-                                <TicketIcon className='mr-2 h-4 w-4' />
-                                New Ticket
-                            </Link>
+                        <Button size='sm' onClick={onSwitchToContactTab}>
+                            <TicketIcon className='mr-2 h-4 w-4' />
+                            New Ticket
                         </Button>
                     </div>
                 </div>

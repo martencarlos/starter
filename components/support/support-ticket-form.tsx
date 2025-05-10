@@ -19,6 +19,10 @@ import { z } from 'zod';
 
 // components/support/support-ticket-form.tsx
 
+// components/support/support-ticket-form.tsx
+
+// components/support/support-ticket-form.tsx
+
 // Type for the form values
 type SupportTicketFormValues = z.infer<typeof ticketSchema>;
 
@@ -114,9 +118,6 @@ export function SupportTicketForm({ user, onSuccess, onError, onTicketCreated }:
                     Thank you for reaching out. Our support team will review your request and respond as soon as
                     possible.
                 </p>
-                <Button className='mt-4' onClick={() => setFormSubmitted(false)}>
-                    Submit Another Request
-                </Button>
             </div>
         );
     }

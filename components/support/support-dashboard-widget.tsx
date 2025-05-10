@@ -4,6 +4,7 @@
 import { useState } from 'react';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import { SupportProvider, useSupport } from '@/components/support/support-context';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +31,7 @@ export function SupportDashboardWidget({ userId }: SupportDashboardWidgetProps) 
 function SupportDashboardContent() {
     const { tickets, isLoading, error, refreshTickets } = useSupport();
     const [refreshing, setRefreshing] = useState(false);
+    const router = useRouter();
 
     // Format date to readable format
     const formatDate = (dateString: string) => {
@@ -45,6 +47,10 @@ function SupportDashboardContent() {
         setRefreshing(true);
         await refreshTickets();
         setRefreshing(false);
+    };
+
+    const handleNewTicket = () => {
+        router.push('/support?tab=contact');
     };
 
     // Filter for active tickets
@@ -137,11 +143,9 @@ function SupportDashboardContent() {
                         <Button variant='ghost' size='sm' asChild>
                             <Link href='/support?tab=tickets'>View all</Link>
                         </Button>
-                        <Button size='sm' asChild>
-                            <Link href='/support?tab=contact'>
-                                <TicketIcon className='mr-2 h-4 w-4' />
-                                New ticket
-                            </Link>
+                        <Button size='sm' onClick={handleNewTicket}>
+                            <TicketIcon className='mr-2 h-4 w-4' />
+                            New ticket
                         </Button>
                     </div>
                 </div>

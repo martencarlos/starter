@@ -3,11 +3,7 @@
 
 import React, { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 
-import { TicketCategory, TicketCreateData, TicketStatus, Ticket as TicketType } from '@/lib/services/ticket-service';
-
-import { toast } from 'sonner';
-
-// components/support/support-context.tsx
+import { TicketCreateData, Ticket as TicketType } from '@/lib/services/ticket-service';
 
 // components/support/support-context.tsx
 
