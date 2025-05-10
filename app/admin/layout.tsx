@@ -2,7 +2,6 @@
 import { ReactNode } from 'react';
 
 import { Metadata } from 'next';
-import Link from 'next/link';
 // Keep for main title link if needed
 import { redirect } from 'next/navigation';
 
@@ -36,7 +35,6 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
     return (
         <div className='container mx-auto px-4 py-8'>
-            <h1 className='mb-6 text-3xl font-bold'>Admin Dashboard</h1>
             {/* The children will be app/admin/view/page.tsx or specific pages like app/admin/roles/[id]/page.tsx */}
             {children}
         </div>

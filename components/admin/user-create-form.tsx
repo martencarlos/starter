@@ -16,6 +16,8 @@ import { toast } from 'sonner';
 
 // components/admin/user-create-form.tsx
 
+// components/admin/user-create-form.tsx
+
 interface Role {
     id: number;
     name: string;
@@ -199,7 +201,7 @@ export default function UserCreateForm({ allRoles }: UserCreateFormProps) {
                 <Button
                     type='button'
                     variant='outline'
-                    onClick={() => router.push('/admin/users')}
+                    onClick={() => router.push('/admin/view?tab=users')}
                     disabled={isLoading}>
                     Cancel
                 </Button>

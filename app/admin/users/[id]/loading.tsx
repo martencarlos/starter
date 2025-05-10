@@ -3,8 +3,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function EditUserLoading() {
     return (
-        <div className='container mx-auto px-4 py-8'>
-            <Skeleton className='mb-8 h-9 w-1/3 md:w-1/4' /> {/* Matches "Edit User" H1 */}
+        <>
+            {/* Skeleton for Admin Dashboard H1 */}
+            <Skeleton className='mb-6 h-9 w-1/3 md:w-1/4' />
+
+            {/* Skeleton for "Edit User" H1 */}
+            <Skeleton className='mb-8 h-9 w-1/3 md:w-1/4' />
+
             <div className='bg-card space-y-6 rounded-lg border p-6 shadow-sm'>
                 {/* Form field skeletons */}
                 <div className='space-y-2'>
@@ -37,6 +42,6 @@ export default function EditUserLoading() {
                     </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 }

@@ -30,7 +30,7 @@ export async function query<T extends QueryResultRow>(text: string, params?: any
     try {
         const res: QueryResult<T> = await pool.query(text, params);
         const duration = Date.now() - start;
-        console.log('Executed query', { text, duration, rows: res.rowCount });
+        // console.log('Executed query', { text, duration, rows: res.rowCount });
 
         return res.rows;
     } catch (error) {

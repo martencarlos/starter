@@ -116,7 +116,7 @@ export default function UserEditForm({ user, allRoles }: UserEditFormProps) {
 
             toast.success('User deleted successfully');
             setShowDeleteDialog(false);
-            router.push('/admin/users');
+            router.push('/admin/view?tab=users');
             router.refresh();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An unexpected error occurred');
@@ -221,7 +221,7 @@ export default function UserEditForm({ user, allRoles }: UserEditFormProps) {
                         <Button
                             type='button'
                             variant='outline'
-                            onClick={() => router.push('/admin/users')}
+                            onClick={() => router.push('/admin/view?tab=users')}
                             disabled={isLoading}>
                             Cancel
                         </Button>

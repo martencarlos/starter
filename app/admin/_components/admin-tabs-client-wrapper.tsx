@@ -11,10 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // app/admin/_components/admin-tabs-client-wrapper.tsx
 
-// app/admin/_components/admin-tabs-client-wrapper.tsx
-
-// app/admin/_components/admin-tabs-client-wrapper.tsx
-
 // For loading state
 
 interface AdminTabsClientWrapperProps {

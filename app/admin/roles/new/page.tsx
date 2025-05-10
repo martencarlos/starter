@@ -14,12 +14,16 @@ export default async function CreateRolePage() {
     const allPermissions = await query('SELECT id, name, description FROM permissions ORDER BY name');
 
     return (
-        <div className='container mx-auto px-4 py-8'>
+        <>
+            {/* Main Admin Dashboard H1 */}
+            <h1 className='mb-6 text-3xl font-bold'>Admin Dashboard</h1>
+
+            {/* Specific Page Title */}
             <h1 className='mb-8 text-3xl font-bold'>Create Role</h1>
 
             <div className='bg-card rounded-lg border p-6 shadow-sm'>
                 <RoleForm allPermissions={allPermissions} isNew={true} />
             </div>
-        </div>
+        </>
     );
 }

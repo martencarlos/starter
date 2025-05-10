@@ -33,7 +33,11 @@ export default async function AdminUserEditPage({ params }: { params: { id: stri
     const allRoles = await query('SELECT id, name, description FROM roles ORDER BY name');
 
     return (
-        <div className='container mx-auto px-4 py-8'>
+        <>
+            {/* Main Admin Dashboard H1 */}
+            <h1 className='mb-6 text-3xl font-bold'>Admin Dashboard</h1>
+
+            {/* Specific Page Title */}
             <h1 className='mb-8 text-3xl font-bold'>Edit User</h1>
 
             <div className='bg-card rounded-lg border p-6 shadow-sm'>
@@ -45,6 +49,6 @@ export default async function AdminUserEditPage({ params }: { params: { id: stri
                     allRoles={allRoles}
                 />
             </div>
-        </div>
+        </>
     );
 }

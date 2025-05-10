@@ -10,16 +10,19 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminUserCreatePage() {
-    // Get all available roles for the dropdown
     const allRoles = await query('SELECT id, name, description FROM roles ORDER BY name');
 
     return (
-        <div className='container mx-auto px-4 py-8'>
+        <>
+            {/* Add the main Admin Dashboard H1 here */}
+            <h1 className='mb-6 text-3xl font-bold'>Admin Dashboard</h1>
+
+            {/* Specific Page Title */}
             <h1 className='mb-8 text-3xl font-bold'>Create User</h1>
 
             <div className='bg-card rounded-lg border p-6 shadow-sm'>
                 <UserCreateForm allRoles={allRoles} />
             </div>
-        </div>
+        </>
     );
 }
