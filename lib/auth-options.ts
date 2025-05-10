@@ -44,7 +44,7 @@ export const authOptions: NextAuthOptions = {
                 email: { label: 'Email', type: 'email' },
                 password: { label: 'Password', type: 'password' }
             },
-            async authorize(credentials) {
+            async authorize(credentials, req) {
                 if (!credentials?.email || !credentials?.password) {
                     throw new Error('Email and password required');
                 }
@@ -96,7 +96,27 @@ export const authOptions: NextAuthOptions = {
         maxAge: 30 * 24 * 60 * 60 // 30 days
     },
     callbacks: {
-        async signIn({ user, account, profile }) {
+        async signIn({ user, account, profile }, request) {
+            // Track login activity if we have a user ID
+            if (user?.id) {
+                const ipAddress = request?.headers?.['x-forwarded-for'] || request?.socket?.remoteAddress || null;
+                const userAgent = request?.headers?.['user-agent'] || null;
+
+                try {
+                    // Import dynamically to avoid circular dependencies
+                    const { trackUserActivity } = await import('@/lib/activity-tracker');
+                    await trackUserActivity({
+                        userId: user.id,
+                        type: 'login',
+                        ipAddress: ipAddress as string,
+                        userAgent: userAgent as string
+                    });
+                } catch (error) {
+                    console.error('Error tracking login activity:', error);
+                    // Continue signin process even if tracking fails
+                }
+            }
+
             if (account?.provider === 'google') {
                 // Check if this OAuth account already exists in our database
                 const existingUser = await query<{ id: string }>(
@@ -253,6 +273,19 @@ export const authOptions: NextAuthOptions = {
                     // Given `createSessionRecord` might use `account.access_token` for OAuth, or a new random token for credentials,
                     // a simple `DELETE FROM user_sessions WHERE user_id = $1` is safer for now.
                     await query('DELETE FROM user_sessions WHERE user_id = $1', [token.id]);
+
+                    // Track logout activity
+                    try {
+                        // Import dynamically to avoid circular dependencies
+                        const { trackUserActivity } = await import('@/lib/activity-tracker');
+                        await trackUserActivity({
+                            userId: token.id,
+                            type: 'logout',
+                            details: 'User signed out'
+                        });
+                    } catch (error) {
+                        console.error('Error tracking logout activity:', error);
+                    }
                 }
             } catch (error) {
                 console.error('Error removing session record(s):', error);
@@ -262,6 +295,21 @@ export const authOptions: NextAuthOptions = {
             // This event is typically used with database adapters.
             // If you call `update({ name: "New Name" })` on client, `jwt` callback's `trigger` will be 'update'.
             console.log('User updated event (message):', message);
+
+            // Track user update activity if we have user info
+            if (message?.user?.id) {
+                try {
+                    // Import dynamically to avoid circular dependencies
+                    const { trackUserActivity } = await import('@/lib/activity-tracker');
+                    await trackUserActivity({
+                        userId: message.user.id,
+                        type: 'profile_update',
+                        details: 'User profile updated via session'
+                    });
+                } catch (error) {
+                    console.error('Error tracking user update activity:', error);
+                }
+            }
         }
     },
     secret: process.env.NEXTAUTH_SECRET

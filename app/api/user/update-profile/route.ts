@@ -63,6 +63,19 @@ export async function PATCH(req: NextRequest) {
         const updatedUser = result[0];
         console.log('User updated successfully:', updatedUser);
 
+        // Track the profile update activity
+        try {
+            const { trackUserActivity } = await import('@/lib/activity-tracker');
+            await trackUserActivity({
+                userId: userId,
+                type: 'profile_update',
+                details: `Updated profile name to: ${name}`
+            });
+        } catch (error) {
+            console.error('Error tracking profile update activity:', error);
+            // Continue with the response even if tracking fails
+        }
+
         return NextResponse.json(
             {
                 message: 'Profile updated successfully',
