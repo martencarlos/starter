@@ -13,6 +13,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // app/admin/_components/admin-tabs-client-wrapper.tsx
 
+// app/admin/_components/admin-tabs-client-wrapper.tsx
+
 // For loading state
 
 interface AdminTabsClientWrapperProps {
@@ -61,10 +63,10 @@ export default function AdminTabsClientWrapper({
 
     // Helper for Suspense fallback
     const TabSkeleton = () => (
-        <div className='space-y-4 p-4'>
+        <div className='animate-pulse space-y-4 p-4'>
             <Skeleton className='h-8 w-1/4' />
             <Skeleton className='h-4 w-full' />
-            <Skeleton className='h-20 w-full' />
+            <Skeleton className='h-32 w-full' />
             <Skeleton className='h-20 w-full' />
         </div>
     );

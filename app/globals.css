@@ -209,6 +209,10 @@
         @apply mx-auto;
     }
 
+    .loading-transition {
+        transition: opacity 0.2s ease-in-out;
+    }
+
     /* Add pointer cursor to interactive elements */
     button,
     a,
