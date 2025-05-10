@@ -4,8 +4,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+import { NotificationDropdown } from '@/components/notifications/notification-dropdown';
 import { WithRole } from '@/components/rbac/with-role';
-// Added Skeleton import
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,9 +33,8 @@ export function NavigationClient({ initialSession }: NavigationClientProps) {
     const pathname = usePathname();
     const { data: sessionData, status } = useSession();
 
-    // Prefer live session data, fall back to initialSession, then null
     const session = sessionData ?? initialSession;
-    const isLoadingSession = status === 'loading' && !initialSession; // Show loading only if client is fetching and no initial data
+    const isLoadingSession = status === 'loading' && !initialSession;
 
     const userName = session?.user?.name;
 
@@ -50,12 +49,12 @@ export function NavigationClient({ initialSession }: NavigationClientProps) {
     return (
         <header className='bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10 w-full border-b backdrop-blur'>
             <div className='container mx-auto flex h-14 items-center justify-between px-4'>
-                <div className='flex items-center gap-4'>
+                <div className='mr-auto flex items-center gap-4'>
                     <Link href='/' className='flex items-center gap-2'>
                         <span className='text-xl font-bold'>Starter Template</span>
                     </Link>
                     <nav className='hidden items-center gap-6 md:flex'>
-                        {session && ( // Only show these links if session is resolved and exists
+                        {session && (
                             <>
                                 <Link
                                     href='/dashboard'
@@ -78,11 +77,9 @@ export function NavigationClient({ initialSession }: NavigationClientProps) {
                                     }`}>
                                     Support
                                 </Link>
-
-                                {/* Admin links - only visible for users with admin role */}
                                 <WithRole role='admin'>
                                     <Link
-                                        href='/admin'
+                                        href='/admin/view?tab=users'
                                         className={`hover:text-primary text-sm transition-colors ${
                                             pathname.startsWith('/admin')
                                                 ? 'text-primary font-medium'
@@ -96,84 +93,90 @@ export function NavigationClient({ initialSession }: NavigationClientProps) {
                     </nav>
                 </div>
 
-                <div className='flex items-center gap-4'>
+                <div className='flex items-center gap-2'>
                     <ThemeToggle />
 
                     {isLoadingSession ? (
                         <div className='flex items-center gap-2'>
-                            <Skeleton className='h-8 w-20 rounded-md' /> {/* Sign in button placeholder */}
-                            <Skeleton className='h-8 w-8 rounded-full' /> {/* Avatar placeholder */}
+                            <Skeleton className='h-8 w-20 rounded-md' />
+                            <Skeleton className='h-9 w-9 rounded-full' />
+                            <Skeleton className='h-8 w-8 rounded-full' />
                         </div>
                     ) : session ? (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger className='focus:outline-none'>
-                                <UserAvatar name={userName} imageUrl={session.user?.image} size='sm' />
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align='end' className='w-56'>
-                                <DropdownMenuLabel>
-                                    <div className='flex flex-col space-y-1'>
-                                        <p className='text-sm font-medium'>{userName || 'User'}</p>
-                                        <p className='text-muted-foreground text-xs'>Account</p>
+                        <>
+                            <NotificationDropdown />
+                            <DropdownMenu>
+                                <DropdownMenuTrigger className='focus:outline-none'>
+                                    <UserAvatar name={userName} imageUrl={session.user?.image} size='sm' />
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align='end' className='w-56'>
+                                    <DropdownMenuLabel>
+                                        <div className='flex flex-col space-y-1'>
+                                            <p className='text-sm font-medium'>{userName || 'User'}</p>
+                                            <p className='text-muted-foreground text-xs'>Account</p>
 
-                                        {session?.user?.roles && session.user.roles.length > 0 && (
-                                            <div className='mt-1 flex flex-wrap gap-1'>
-                                                {session.user.roles.map((role) => (
-                                                    <span
-                                                        key={role}
-                                                        className='bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs'>
-                                                        {role}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                </DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem asChild>
-                                    <Link href='/dashboard' className='flex cursor-pointer items-center'>
-                                        <User className='mr-2 h-4 w-4' />
-                                        <span>Dashboard</span>
-                                    </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <Link href='/profile' className='flex cursor-pointer items-center'>
-                                        <Settings className='mr-2 h-4 w-4' />
-                                        <span>Profile Settings</span>
-                                    </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <Link href='/support' className='flex cursor-pointer items-center'>
-                                        <LifeBuoy className='mr-2 h-4 w-4' />
-                                        <span>Support</span>
-                                    </Link>
-                                </DropdownMenuItem>
-
-                                <WithRole role='admin'>
+                                            {session?.user?.roles && session.user.roles.length > 0 && (
+                                                <div className='mt-1 flex flex-wrap gap-1'>
+                                                    {session.user.roles.map((role) => (
+                                                        <span
+                                                            key={role}
+                                                            className='bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs'>
+                                                            {role}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
                                     <DropdownMenuItem asChild>
-                                        <Link href='/admin/view?tab=users' className='flex cursor-pointer items-center'>
-                                            <Shield className='mr-2 h-4 w-4' />
-                                            <span>Admin Dashboard</span>
+                                        <Link href='/dashboard' className='flex cursor-pointer items-center'>
+                                            <User className='mr-2 h-4 w-4' />
+                                            <span>Dashboard</span>
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild>
-                                        <Link
-                                            href='/admin/view?tab=analytics'
-                                            className='flex cursor-pointer items-center'>
-                                            <BarChart className='mr-2 h-4 w-4' />
-                                            <span>System Analytics</span>
+                                        <Link href='/profile' className='flex cursor-pointer items-center'>
+                                            <Settings className='mr-2 h-4 w-4' />
+                                            <span>Profile Settings</span>
                                         </Link>
                                     </DropdownMenuItem>
-                                </WithRole>
+                                    <DropdownMenuItem asChild>
+                                        <Link href='/support' className='flex cursor-pointer items-center'>
+                                            <LifeBuoy className='mr-2 h-4 w-4' />
+                                            <span>Support</span>
+                                        </Link>
+                                    </DropdownMenuItem>
 
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                    className='text-destructive focus:text-destructive flex cursor-pointer items-center'
-                                    onClick={handleSignOut}>
-                                    <LogOut className='mr-2 h-4 w-4' />
-                                    <span>Sign out</span>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                                    <WithRole role='admin'>
+                                        <DropdownMenuItem asChild>
+                                            <Link
+                                                href='/admin/view?tab=users'
+                                                className='flex cursor-pointer items-center'>
+                                                <Shield className='mr-2 h-4 w-4' />
+                                                <span>Admin Dashboard</span>
+                                            </Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem asChild>
+                                            <Link
+                                                href='/admin/view?tab=analytics'
+                                                className='flex cursor-pointer items-center'>
+                                                <BarChart className='mr-2 h-4 w-4' />
+                                                <span>System Analytics</span>
+                                            </Link>
+                                        </DropdownMenuItem>
+                                    </WithRole>
+
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                        className='text-destructive focus:text-destructive flex cursor-pointer items-center'
+                                        onClick={handleSignOut}>
+                                        <LogOut className='mr-2 h-4 w-4' />
+                                        <span>Sign out</span>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </>
                     ) : (
                         <div className='flex items-center gap-2'>
                             <Button variant='ghost' size='sm' asChild>

@@ -1,4 +1,3 @@
--- Create users table
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email VARCHAR(100) UNIQUE NOT NULL,
@@ -14,7 +13,6 @@ CREATE TABLE IF NOT EXISTS users (
   oauth_expires_at TIMESTAMP WITH TIME ZONE
 );
 
--- Create password_reset table
 CREATE TABLE IF NOT EXISTS password_reset (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -24,7 +22,6 @@ CREATE TABLE IF NOT EXISTS password_reset (
   CONSTRAINT unique_password_reset_token UNIQUE (token)
 );
 
--- Create email_verification table
 CREATE TABLE IF NOT EXISTS email_verification (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -34,7 +31,6 @@ CREATE TABLE IF NOT EXISTS email_verification (
   CONSTRAINT unique_email_verification_token UNIQUE (token)
 );
 
--- Create user_sessions table (for tracking active sessions)
 CREATE TABLE IF NOT EXISTS user_sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -46,7 +42,6 @@ CREATE TABLE IF NOT EXISTS user_sessions (
   CONSTRAINT unique_session_token UNIQUE (session_token)
 );
 
--- Roles Table
 CREATE TABLE IF NOT EXISTS roles (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) UNIQUE NOT NULL,
@@ -55,16 +50,14 @@ CREATE TABLE IF NOT EXISTS roles (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Permissions Table
 CREATE TABLE IF NOT EXISTS permissions (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(100) UNIQUE NOT NULL, -- e.g., 'create:post', 'read:user'
+    name VARCHAR(100) UNIQUE NOT NULL,
     description TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- User Roles (Junction Table)
 CREATE TABLE IF NOT EXISTS user_roles (
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     role_id INTEGER REFERENCES roles(id) ON DELETE CASCADE,
@@ -72,7 +65,6 @@ CREATE TABLE IF NOT EXISTS user_roles (
     assigned_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Role Permissions (Junction Table)
 CREATE TABLE IF NOT EXISTS role_permissions (
     role_id INTEGER REFERENCES roles(id) ON DELETE CASCADE,
     permission_id INTEGER REFERENCES permissions(id) ON DELETE CASCADE,
@@ -80,17 +72,15 @@ CREATE TABLE IF NOT EXISTS role_permissions (
     assigned_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Role Assignment History (Audit Log)
 CREATE TABLE IF NOT EXISTS role_assignment_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     role_id INTEGER NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
-    assigned_by UUID REFERENCES users(id) ON DELETE SET NULL, -- User ID of admin who assigned/removed role, or NULL if system
-    action VARCHAR(10) NOT NULL, -- 'assign' or 'remove'
+    assigned_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    action VARCHAR(10) NOT NULL, 
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create indexes for faster lookups
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_oauth ON users(oauth_provider, oauth_id) WHERE oauth_provider IS NOT NULL AND oauth_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_password_reset_user_id ON password_reset(user_id);
@@ -104,7 +94,6 @@ CREATE INDEX IF NOT EXISTS idx_role_assignment_history_user_id ON role_assignmen
 CREATE INDEX IF NOT EXISTS idx_role_assignment_history_role_id ON role_assignment_history(role_id);
 CREATE INDEX IF NOT EXISTS idx_role_assignment_history_assigned_by ON role_assignment_history(assigned_by);
 
--- Create function to update timestamps
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -113,7 +102,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create triggers for updated_at
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_users_updated_at') THEN
@@ -136,9 +124,10 @@ BEGIN
   END IF;
 END $$;
 
--- Default roles and permissions
 INSERT INTO roles (name, description) VALUES ('admin', 'Administrator with full access') ON CONFLICT (name) DO NOTHING;
 INSERT INTO roles (name, description) VALUES ('user', 'Standard user with basic access') ON CONFLICT (name) DO NOTHING;
+INSERT INTO roles (name, description) VALUES ('support_agent', 'Support agent with access to support tickets') ON CONFLICT (name) DO NOTHING;
+
 
 INSERT INTO permissions (name, description) VALUES ('manage:users', 'Can create, read, update, and delete users') ON CONFLICT (name) DO NOTHING;
 INSERT INTO permissions (name, description) VALUES ('manage:roles', 'Can manage roles and their permissions') ON CONFLICT (name) DO NOTHING;
@@ -148,20 +137,27 @@ INSERT INTO permissions (name, description) VALUES ('read:users', 'Can view user
 INSERT INTO permissions (name, description) VALUES ('read:reports', 'Can view system reports') ON CONFLICT (name) DO NOTHING;
 INSERT INTO permissions (name, description) VALUES ('read:audit_log', 'Can view system audit log') ON CONFLICT (name) DO NOTHING;
 INSERT INTO permissions (name, description) VALUES ('read:analytics', 'Can view system analytics') ON CONFLICT (name) DO NOTHING;
+INSERT INTO permissions (name, description) VALUES ('manage:support_tickets', 'Can manage all support tickets (admins)') ON CONFLICT (name) DO NOTHING;
+INSERT INTO permissions (name, description) VALUES ('reply:support_tickets', 'Can reply to support tickets (support agents)') ON CONFLICT (name) DO NOTHING;
 
--- Assign all manage permissions to admin role
+
 DO $$
 DECLARE
     admin_role_id_val INTEGER;
+    support_agent_role_id_val INTEGER;
     perm_id INTEGER;
     perm_name TEXT;
     admin_permissions TEXT[] := ARRAY[
         'manage:users', 'manage:roles', 'manage:permissions', 
         'view:admin_dashboard', 'read:users', 'read:reports', 
-        'read:audit_log', 'read:analytics'
+        'read:audit_log', 'read:analytics', 'manage:support_tickets', 'reply:support_tickets'
+    ];
+    support_agent_permissions TEXT[] := ARRAY[
+        'reply:support_tickets'
     ];
 BEGIN
     SELECT id INTO admin_role_id_val FROM roles WHERE name = 'admin';
+    SELECT id INTO support_agent_role_id_val FROM roles WHERE name = 'support_agent';
 
     IF admin_role_id_val IS NOT NULL THEN
         FOREACH perm_name IN ARRAY admin_permissions
@@ -172,4 +168,64 @@ BEGIN
             END IF;
         END LOOP;
     END IF;
+
+    IF support_agent_role_id_val IS NOT NULL THEN
+        FOREACH perm_name IN ARRAY support_agent_permissions
+        LOOP
+            SELECT id INTO perm_id FROM permissions WHERE name = perm_name;
+            IF perm_id IS NOT NULL THEN
+                INSERT INTO role_permissions (role_id, permission_id) VALUES (support_agent_role_id_val, perm_id) ON CONFLICT DO NOTHING;
+            END IF;
+        END LOOP;
+    END IF;
 END $$;
+
+CREATE TABLE IF NOT EXISTS support_tickets (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL, 
+    ticket_number TEXT UNIQUE NOT NULL DEFAULT 'ST-' || substr(replace(gen_random_uuid()::text, '-', ''), 1, 8),
+    subject TEXT NOT NULL,
+    category VARCHAR(50) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'open',
+    created_by_name VARCHAR(100),
+    created_by_email VARCHAR(100),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS ticket_messages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    ticket_id UUID NOT NULL REFERENCES support_tickets(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL, 
+    sender VARCHAR(50) NOT NULL, 
+    content TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS ticket_contact_info (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    ticket_id UUID NOT NULL REFERENCES support_tickets(id) ON DELETE CASCADE UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_support_tickets_user_id ON support_tickets(user_id);
+CREATE INDEX IF NOT EXISTS idx_support_tickets_status ON support_tickets(status);
+CREATE INDEX IF NOT EXISTS idx_ticket_messages_ticket_id ON ticket_messages(ticket_id);
+CREATE INDEX IF NOT EXISTS idx_ticket_contact_info_ticket_id ON ticket_contact_info(ticket_id);
+
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type VARCHAR(100) NOT NULL,
+    message TEXT NOT NULL,
+    link VARCHAR(255),
+    related_entity_id UUID,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id_is_read ON notifications(user_id, is_read, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_related_entity_id ON notifications(related_entity_id);
