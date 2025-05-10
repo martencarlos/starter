@@ -1,4 +1,4 @@
-// components/support/support-dashboard-widget.tsx
+// components/support/support-dashboard-widget.tsx - Updated
 'use client';
 
 import { useState } from 'react';
@@ -12,10 +12,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
-import { RefreshCw, TicketIcon } from 'lucide-react';
+import { ClockIcon, MessageSquareIcon, RefreshCw, TicketIcon } from 'lucide-react';
 
-// components/support/support-dashboard-widget.tsx
+// components/support/support-dashboard-widget.tsx - Updated
 
+// Updated to match height and move new ticket button to own row
 interface SupportDashboardWidgetProps {
     userId: string;
 }
@@ -57,7 +58,7 @@ function SupportDashboardContent() {
     const activeTickets = tickets.filter((ticket) => ticket.status === 'open' || ticket.status === 'pending');
 
     return (
-        <Card>
+        <Card className='flex h-full flex-col'>
             <CardHeader className='pb-3'>
                 <div className='flex items-center justify-between'>
                     <div className='flex flex-col'>
@@ -71,7 +72,7 @@ function SupportDashboardContent() {
                     )}
                 </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className='flex-grow'>
                 {isLoading ? (
                     <div className='space-y-3'>
                         <Skeleton className='h-12 w-full' />
@@ -128,7 +129,7 @@ function SupportDashboardContent() {
                     </ul>
                 )}
             </CardContent>
-            <CardFooter className='border-t pt-3'>
+            <CardFooter className='flex-col space-y-3 border-t pt-3'>
                 <div className='flex w-full items-center justify-between'>
                     <Button
                         variant='ghost'
@@ -139,16 +140,79 @@ function SupportDashboardContent() {
                         <RefreshCw className={`h-3 w-3 ${refreshing ? 'animate-spin' : ''}`} />
                         Refresh
                     </Button>
-                    <div className='flex gap-2'>
-                        <Button variant='ghost' size='sm' asChild>
-                            <Link href='/support?tab=tickets'>View all</Link>
-                        </Button>
-                        <Button size='sm' onClick={handleNewTicket}>
-                            <TicketIcon className='mr-2 h-4 w-4' />
-                            New ticket
-                        </Button>
-                    </div>
+                    <Button variant='ghost' size='sm' asChild>
+                        <Link href='/support?tab=tickets'>View all</Link>
+                    </Button>
                 </div>
+                <Button size='sm' onClick={handleNewTicket} className='w-full'>
+                    <TicketIcon className='mr-2 h-4 w-4' />
+                    New ticket
+                </Button>
+            </CardFooter>
+        </Card>
+    );
+}
+
+// Profile Info Widget - New component
+export function ProfileInfoWidget({ user }) {
+    if (!user) return null;
+
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+
+        return new Date(dateString).toLocaleDateString(undefined, {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    };
+
+    return (
+        <Card className='flex h-full flex-col'>
+            <CardHeader className='pb-3'>
+                <div className='flex items-center justify-between'>
+                    <div className='flex flex-col'>
+                        <CardTitle>Profile</CardTitle>
+                        <CardDescription>Your account information</CardDescription>
+                    </div>
+                    <Badge variant={user.emailVerified ? 'default' : 'secondary'}>
+                        {user.emailVerified ? 'Verified' : 'Unverified'}
+                    </Badge>
+                </div>
+            </CardHeader>
+            <CardContent className='flex-grow space-y-4'>
+                <div className='space-y-1'>
+                    <p className='text-sm font-medium'>Name</p>
+                    <p className='text-sm'>{user.name || 'Not set'}</p>
+                </div>
+
+                <div className='space-y-1'>
+                    <p className='text-sm font-medium'>Email</p>
+                    <p className='text-sm'>{user.email}</p>
+                </div>
+
+                <div className='space-y-1'>
+                    <p className='text-sm font-medium'>Member since</p>
+                    <p className='text-sm'>{formatDate(user.createdAt)}</p>
+                </div>
+
+                {user.roles && user.roles.length > 0 && (
+                    <div className='space-y-1'>
+                        <p className='text-sm font-medium'>Roles</p>
+                        <div className='flex flex-wrap gap-1'>
+                            {user.roles.map((role) => (
+                                <Badge key={role} variant='outline' className='text-xs'>
+                                    {role}
+                                </Badge>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </CardContent>
+            <CardFooter className='border-t pt-3'>
+                <Button size='sm' asChild className='w-full'>
+                    <Link href='/profile'>Manage Profile</Link>
+                </Button>
             </CardFooter>
         </Card>
     );

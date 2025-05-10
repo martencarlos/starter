@@ -1,11 +1,11 @@
-// Updated app/dashboard/page.tsx
+// app/dashboard/page.tsx - Updated implementation
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
-import { SupportDashboardWidget } from '@/components/support/support-dashboard-widget';
+import { ProfileInfoWidget, SupportDashboardWidget } from '@/components/support/support-dashboard-widget';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { authOptions } from '@/lib/auth-options';
 import { roleService } from '@/lib/services/role-service';
 
@@ -42,34 +42,44 @@ export default async function DashboardPage() {
             </div>
 
             <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
-                {/* Card shown to all users */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>User Profile</CardTitle>
-                        <CardDescription>View and update your profile information</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Button asChild className='w-full'>
-                            <Link href='/profile'>Manage Profile</Link>
-                        </Button>
-                    </CardContent>
-                </Card>
+                {/* Profile Info Widget */}
+                <ProfileInfoWidget user={user} />
 
                 {/* Support card with recent tickets */}
                 <SupportDashboardWidget userId={user.id} />
 
                 {/* Server-side role check for admin dashboard */}
                 {isAdmin && (
-                    <Card className='bg-primary/5'>
+                    <Card className='bg-primary/5 flex h-full flex-col'>
                         <CardHeader>
                             <CardTitle>Admin Panel</CardTitle>
                             <CardDescription>Manage users, roles and system settings</CardDescription>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className='flex-grow'>
+                            <p className='text-muted-foreground mb-4'>
+                                Access the admin dashboard to manage all aspects of the system including users, roles,
+                                permissions, and audit logs.
+                            </p>
+                            <div className='space-y-2'>
+                                <div className='flex items-center gap-2'>
+                                    <div className='h-2 w-2 rounded-full bg-blue-500'></div>
+                                    <p className='text-sm'>User Management</p>
+                                </div>
+                                <div className='flex items-center gap-2'>
+                                    <div className='h-2 w-2 rounded-full bg-green-500'></div>
+                                    <p className='text-sm'>Role & Permission Control</p>
+                                </div>
+                                <div className='flex items-center gap-2'>
+                                    <div className='h-2 w-2 rounded-full bg-purple-500'></div>
+                                    <p className='text-sm'>System Analytics</p>
+                                </div>
+                            </div>
+                        </CardContent>
+                        <CardFooter className='border-t pt-3'>
                             <Button asChild className='w-full'>
                                 <Link href='/admin/view?tab=users'>Go to Admin Panel</Link>
                             </Button>
-                        </CardContent>
+                        </CardFooter>
                     </Card>
                 )}
             </div>
