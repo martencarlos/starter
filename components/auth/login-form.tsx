@@ -14,6 +14,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 
 import { signIn, useSession } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 interface LoginFormProps {
     callbackUrl?: string;
@@ -27,6 +28,9 @@ export function LoginForm({ callbackUrl = '/dashboard' }: LoginFormProps) {
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false);
+    const [verificationNeeded, setVerificationNeeded] = useState<boolean>(false);
+    const [verificationEmail, setVerificationEmail] = useState<string>('');
+    const [resendingEmail, setResendingEmail] = useState<boolean>(false);
 
     // Get registration success status from URL
     const registered = searchParams.get('registered') === 'true';
@@ -53,6 +57,35 @@ export function LoginForm({ callbackUrl = '/dashboard' }: LoginFormProps) {
         }
     }, [registeredEmail, setValue]);
 
+    const handleResendVerification = async () => {
+        if (!verificationEmail) return;
+
+        setResendingEmail(true);
+        try {
+            const response = await fetch('/api/auth/resend-verification', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email: verificationEmail })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to resend verification email');
+            }
+
+            // Show success message
+            toast.success('Verification email sent. Please check your inbox.');
+        } catch (error) {
+            console.error('Failed to resend verification email:', error);
+            toast.error('Failed to resend verification email. Please try again later.');
+        } finally {
+            setResendingEmail(false);
+        }
+    };
+
     const onSubmit = async (data: LoginFormValues) => {
         setIsLoading(true);
         setError(null);
@@ -65,6 +98,11 @@ export function LoginForm({ callbackUrl = '/dashboard' }: LoginFormProps) {
             });
 
             if (result?.error) {
+                // Handle verification error specifically
+                if (result.error === 'Please verify your email before signing in') {
+                    setVerificationNeeded(true);
+                    setVerificationEmail(data.email);
+                }
                 setError(result.error);
                 setIsLoading(false);
 
@@ -97,6 +135,23 @@ export function LoginForm({ callbackUrl = '/dashboard' }: LoginFormProps) {
             {error && (
                 <Alert variant='destructive'>
                     <AlertDescription>{error}</AlertDescription>
+                </Alert>
+            )}
+            {verificationNeeded && (
+                <Alert>
+                    <AlertDescription className='flex flex-col space-y-2'>
+                        <p>
+                            Your email address has not been verified. Please check your inbox for a verification link.
+                        </p>
+                        <Button
+                            variant='outline'
+                            size='sm'
+                            onClick={handleResendVerification}
+                            disabled={resendingEmail}
+                            className='self-start'>
+                            {resendingEmail ? 'Sending...' : 'Resend verification email'}
+                        </Button>
+                    </AlertDescription>
                 </Alert>
             )}
 

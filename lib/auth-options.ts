@@ -55,6 +55,7 @@ export const authOptions: NextAuthOptions = {
                     email: string;
                     password: string;
                     name: string;
+                    email_verified: boolean; // Make sure this field is used
                 }>('SELECT * FROM users WHERE email = $1', [credentials.email]);
 
                 const user = result[0];
@@ -68,6 +69,11 @@ export const authOptions: NextAuthOptions = {
 
                 if (!passwordMatch) {
                     throw new Error('Invalid credentials');
+                }
+
+                // Check if email is verified
+                if (!user.email_verified) {
+                    throw new Error('Please verify your email before signing in');
                 }
 
                 await createSessionRecord(user.id, null); // Pass null to generate a new token
@@ -106,10 +112,10 @@ export const authOptions: NextAuthOptions = {
                     if (emailUser.length === 0) {
                         // Create a new user with OAuth tokens
                         const result = await query<{ id: string }>(
-                            `INSERT INTO users 
-                            (name, email, oauth_provider, oauth_id, email_verified, 
-                            oauth_access_token, oauth_refresh_token, oauth_expires_at) 
-                            VALUES ($1, $2, $3, $4, TRUE, $5, $6, $7) 
+                            `INSERT INTO users
+                            (name, email, oauth_provider, oauth_id, email_verified,
+                            oauth_access_token, oauth_refresh_token, oauth_expires_at)
+                            VALUES ($1, $2, $3, $4, TRUE, $5, $6, $7)
                             RETURNING id`,
                             [
                                 user.name,
@@ -131,7 +137,7 @@ export const authOptions: NextAuthOptions = {
                     } else {
                         // Link OAuth account to existing email account
                         await query(
-                            `UPDATE users 
+                            `UPDATE users
                             SET oauth_provider = $1, oauth_id = $2, email_verified = TRUE,
                             oauth_access_token = $3, oauth_refresh_token = $4, oauth_expires_at = $5
                             WHERE id = $6`,
@@ -153,7 +159,7 @@ export const authOptions: NextAuthOptions = {
                 } else if (existingUser.length > 0) {
                     // Update existing OAuth user with fresh tokens
                     await query(
-                        `UPDATE users 
+                        `UPDATE users
                         SET oauth_access_token = $1, oauth_refresh_token = $2, oauth_expires_at = $3
                         WHERE id = $4`,
                         [
