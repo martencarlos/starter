@@ -81,6 +81,64 @@ CREATE TABLE IF NOT EXISTS role_assignment_history (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS support_tickets (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL, 
+    ticket_number TEXT UNIQUE NOT NULL DEFAULT 'ST-' || substr(replace(gen_random_uuid()::text, '-', ''), 1, 8),
+    subject TEXT NOT NULL,
+    category VARCHAR(50) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'open',
+    created_by_name VARCHAR(100),
+    created_by_email VARCHAR(100),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS ticket_messages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    ticket_id UUID NOT NULL REFERENCES support_tickets(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL, 
+    sender VARCHAR(50) NOT NULL, 
+    content TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS ticket_contact_info (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    ticket_id UUID NOT NULL REFERENCES support_tickets(id) ON DELETE CASCADE UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type VARCHAR(100) NOT NULL,
+    message TEXT NOT NULL,
+    link VARCHAR(255),
+    related_entity_id UUID,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS user_activity (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type VARCHAR(50) NOT NULL,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    details TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS user_preferences (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    preferences JSONB NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_oauth ON users(oauth_provider, oauth_id) WHERE oauth_provider IS NOT NULL AND oauth_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_password_reset_user_id ON password_reset(user_id);
@@ -93,6 +151,15 @@ CREATE INDEX IF NOT EXISTS idx_role_permissions_permission_id ON role_permission
 CREATE INDEX IF NOT EXISTS idx_role_assignment_history_user_id ON role_assignment_history(user_id);
 CREATE INDEX IF NOT EXISTS idx_role_assignment_history_role_id ON role_assignment_history(role_id);
 CREATE INDEX IF NOT EXISTS idx_role_assignment_history_assigned_by ON role_assignment_history(assigned_by);
+CREATE INDEX IF NOT EXISTS idx_support_tickets_user_id ON support_tickets(user_id);
+CREATE INDEX IF NOT EXISTS idx_support_tickets_status ON support_tickets(status);
+CREATE INDEX IF NOT EXISTS idx_ticket_messages_ticket_id ON ticket_messages(ticket_id);
+CREATE INDEX IF NOT EXISTS idx_ticket_contact_info_ticket_id ON ticket_contact_info(ticket_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id_is_read ON notifications(user_id, is_read, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_related_entity_id ON notifications(related_entity_id);
+CREATE INDEX IF NOT EXISTS idx_user_activity_user_id ON user_activity(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_activity_type ON user_activity(type);
+CREATE INDEX IF NOT EXISTS idx_user_preferences_user_id ON user_preferences(user_id);
 
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -122,12 +189,23 @@ BEGIN
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
   END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_support_tickets_updated_at') THEN
+    CREATE TRIGGER update_support_tickets_updated_at
+    BEFORE UPDATE ON support_tickets
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_user_preferences_updated_at') THEN
+    CREATE TRIGGER update_user_preferences_updated_at
+    BEFORE UPDATE ON user_preferences
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+  END IF;
 END $$;
 
 INSERT INTO roles (name, description) VALUES ('admin', 'Administrator with full access') ON CONFLICT (name) DO NOTHING;
 INSERT INTO roles (name, description) VALUES ('user', 'Standard user with basic access') ON CONFLICT (name) DO NOTHING;
 INSERT INTO roles (name, description) VALUES ('support_agent', 'Support agent with access to support tickets') ON CONFLICT (name) DO NOTHING;
-
 
 INSERT INTO permissions (name, description) VALUES ('manage:users', 'Can create, read, update, and delete users') ON CONFLICT (name) DO NOTHING;
 INSERT INTO permissions (name, description) VALUES ('manage:roles', 'Can manage roles and their permissions') ON CONFLICT (name) DO NOTHING;
@@ -139,7 +217,6 @@ INSERT INTO permissions (name, description) VALUES ('read:audit_log', 'Can view 
 INSERT INTO permissions (name, description) VALUES ('read:analytics', 'Can view system analytics') ON CONFLICT (name) DO NOTHING;
 INSERT INTO permissions (name, description) VALUES ('manage:support_tickets', 'Can manage all support tickets (admins)') ON CONFLICT (name) DO NOTHING;
 INSERT INTO permissions (name, description) VALUES ('reply:support_tickets', 'Can reply to support tickets (support agents)') ON CONFLICT (name) DO NOTHING;
-
 
 DO $$
 DECLARE
@@ -179,53 +256,3 @@ BEGIN
         END LOOP;
     END IF;
 END $$;
-
-CREATE TABLE IF NOT EXISTS support_tickets (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id) ON DELETE SET NULL, 
-    ticket_number TEXT UNIQUE NOT NULL DEFAULT 'ST-' || substr(replace(gen_random_uuid()::text, '-', ''), 1, 8),
-    subject TEXT NOT NULL,
-    category VARCHAR(50) NOT NULL,
-    status VARCHAR(50) NOT NULL DEFAULT 'open',
-    created_by_name VARCHAR(100),
-    created_by_email VARCHAR(100),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS ticket_messages (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    ticket_id UUID NOT NULL REFERENCES support_tickets(id) ON DELETE CASCADE,
-    user_id UUID REFERENCES users(id) ON DELETE SET NULL, 
-    sender VARCHAR(50) NOT NULL, 
-    content TEXT NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS ticket_contact_info (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    ticket_id UUID NOT NULL REFERENCES support_tickets(id) ON DELETE CASCADE UNIQUE,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX IF NOT EXISTS idx_support_tickets_user_id ON support_tickets(user_id);
-CREATE INDEX IF NOT EXISTS idx_support_tickets_status ON support_tickets(status);
-CREATE INDEX IF NOT EXISTS idx_ticket_messages_ticket_id ON ticket_messages(ticket_id);
-CREATE INDEX IF NOT EXISTS idx_ticket_contact_info_ticket_id ON ticket_contact_info(ticket_id);
-
-
-CREATE TABLE IF NOT EXISTS notifications (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    type VARCHAR(100) NOT NULL,
-    message TEXT NOT NULL,
-    link VARCHAR(255),
-    related_entity_id UUID,
-    is_read BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX IF NOT EXISTS idx_notifications_user_id_is_read ON notifications(user_id, is_read, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_notifications_related_entity_id ON notifications(related_entity_id);
