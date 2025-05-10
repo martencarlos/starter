@@ -1,3 +1,4 @@
+// app/api/auth/verify-email/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
 import { userService } from '@/lib/services/user-service';

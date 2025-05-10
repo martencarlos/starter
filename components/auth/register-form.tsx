@@ -68,8 +68,8 @@ export function RegisterForm() {
                 return;
             }
 
-            // Redirect to login page on successful registration
-            router.push('/login?registered=true');
+            // Redirect to login page on successful registration with registered=true and email parameter
+            router.push(`/login?registered=true&email=${encodeURIComponent(data.email)}`);
         } catch (error) {
             setError('An unexpected error occurred');
             console.error('Registration error:', error);

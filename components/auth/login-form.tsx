@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -21,18 +21,37 @@ interface LoginFormProps {
 
 export function LoginForm({ callbackUrl = '/dashboard' }: LoginFormProps) {
     const router = useRouter();
-    const { status } = useSession();
+    useSession();
+    const searchParams = useSearchParams();
+
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false);
 
+    // Get registration success status from URL
+    const registered = searchParams.get('registered') === 'true';
+    const registeredEmail = searchParams.get('email');
+    const verified = searchParams.get('verified') === 'true';
+    const reset = searchParams.get('reset') === 'true';
+
     const {
         register,
         handleSubmit,
+        setValue,
         formState: { errors }
     } = useForm<LoginFormValues>({
-        resolver: zodResolver(loginSchema)
+        resolver: zodResolver(loginSchema),
+        defaultValues: {
+            email: registeredEmail || ''
+        }
     });
+
+    // Set default email if provided in URL
+    useEffect(() => {
+        if (registeredEmail) {
+            setValue('email', registeredEmail);
+        }
+    }, [registeredEmail, setValue]);
 
     const onSubmit = async (data: LoginFormValues) => {
         setIsLoading(true);
@@ -78,6 +97,28 @@ export function LoginForm({ callbackUrl = '/dashboard' }: LoginFormProps) {
             {error && (
                 <Alert variant='destructive'>
                     <AlertDescription>{error}</AlertDescription>
+                </Alert>
+            )}
+
+            {registered && (
+                <Alert>
+                    <AlertDescription>
+                        Registration successful! Please check your email to verify your account before signing in.
+                    </AlertDescription>
+                </Alert>
+            )}
+
+            {verified && (
+                <Alert>
+                    <AlertDescription>Your email has been verified successfully! You can now sign in.</AlertDescription>
+                </Alert>
+            )}
+
+            {reset && (
+                <Alert>
+                    <AlertDescription>
+                        Your password has been reset successfully! You can now sign in with your new password.
+                    </AlertDescription>
                 </Alert>
             )}
 

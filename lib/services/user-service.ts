@@ -38,8 +38,8 @@ export const userService: UserService = {
 
             return await transaction(async (client) => {
                 const result = await client.query(
-                    `INSERT INTO users (email, name, password) 
-                        VALUES ($1, $2, $3) 
+                    `INSERT INTO users (email, name, password)
+                        VALUES ($1, $2, $3)
                         RETURNING id, email, name, created_at, updated_at, email_verified`,
                     [data.email, data.name, hashedPassword]
                 );
@@ -56,7 +56,7 @@ export const userService: UserService = {
                             'INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT (user_id, role_id) DO NOTHING',
                             [user.id, roleId]
                         );
-                        // Manually log audit for role assignment if assignRoleToUser isn't client-aware
+                        // Manually log audit for role assignment
                         await client.query(
                             `INSERT INTO role_assignment_history (user_id, role_id, action)
                                  VALUES ($1, $2, 'assign')`, // assigned_by could be system or null
@@ -65,18 +65,24 @@ export const userService: UserService = {
                     }
                 }
 
+                // Generate verification token
                 const token = crypto.randomBytes(32).toString('hex');
                 const expiresAt = new Date();
-                expiresAt.setHours(expiresAt.getHours() + 24);
+                expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour expiration
 
+                // Store the token in the database
                 await client.query(
-                    `INSERT INTO email_verification (user_id, token, expires_at) 
+                    `INSERT INTO email_verification (user_id, token, expires_at)
                         VALUES ($1, $2, $3)`,
                     [user.id, token, expiresAt]
                 );
 
-                const verifyUrl = `${process.env.NEXTAUTH_URL}/verify-email?token=${token}`;
-                await sendEmail('verifyEmail', { email: user.email, verifyUrl });
+                // Send verification email with the token (not a URL)
+                await sendEmail('verifyEmail', {
+                    email: user.email,
+                    name: user.name,
+                    token: token
+                });
 
                 return { user, success: true };
             });
@@ -121,8 +127,8 @@ export const userService: UserService = {
             return await transaction(async (client) => {
                 // Find verification record
                 const verificationResult = await client.query(
-                    `SELECT user_id FROM email_verification 
-           WHERE token = $1 AND expires_at > CURRENT_TIMESTAMP`,
+                    `SELECT user_id FROM email_verification
+                     WHERE token = $1 AND expires_at > CURRENT_TIMESTAMP`,
                     [token]
                 );
 
@@ -166,13 +172,14 @@ export const userService: UserService = {
 
             // Insert new token
             await query(
-                `INSERT INTO password_reset (user_id, token, expires_at) 
-         VALUES ($1, $2, $3)`,
+                `INSERT INTO password_reset (user_id, token, expires_at)
+                 VALUES ($1, $2, $3)`,
                 [user.id, token, expiresAt]
             );
 
             // Send reset email
-            const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${token}`;
+            const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+            const resetUrl = `${appUrl}/reset-password?token=${token}`;
             await sendEmail('resetPassword', { email: user.email, resetUrl });
 
             return token;
@@ -187,8 +194,8 @@ export const userService: UserService = {
     async verifyPasswordResetToken(token) {
         try {
             const result = await queryOne<{ user_id: string }>(
-                `SELECT user_id FROM password_reset 
-         WHERE token = $1 AND expires_at > CURRENT_TIMESTAMP`,
+                `SELECT user_id FROM password_reset
+                 WHERE token = $1 AND expires_at > CURRENT_TIMESTAMP`,
                 [token]
             );
 
