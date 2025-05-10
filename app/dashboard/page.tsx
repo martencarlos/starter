@@ -62,7 +62,7 @@ export default async function DashboardPage() {
                 {isAdmin && (
                     <Card className='bg-primary/5'>
                         <CardHeader>
-                            <CardTitle>Admin Dashboard</CardTitle>
+                            <CardTitle>Admin Panel</CardTitle>
                             <CardDescription>Manage users, roles and system settings</CardDescription>
                         </CardHeader>
                         <CardContent>
