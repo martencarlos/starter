@@ -101,7 +101,7 @@ async function patchHandler(req: NextRequest, { params }: { params: { id: string
 
 async function deleteHandler(req: NextRequest, { params }: { params: { id: string } }) {
     // Protection for this route is handled by middleware.ts
-    const { id } = params;
+    const { id } = await params;
 
     // Check if user exists
     const user = await queryOne('SELECT id FROM users WHERE id = $1', [id]);
