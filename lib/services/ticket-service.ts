@@ -49,14 +49,37 @@ export const ticketService = {
     // Create a new ticket
     async createTicket(data: TicketCreateData): Promise<{ success: boolean; ticketId?: string; error?: string }> {
         try {
-            // Insert the ticket
-            const ticketResult = await query<{ id: string; ticket_number: string }>(
-                `INSERT INTO support_tickets
-                (user_id, name, email, subject, category, status)
-                VALUES ($1, $2, $3, $4, $5, 'open')
-                RETURNING id, ticket_number`,
-                [data.userId || null, data.name, data.email, data.subject, data.category]
-            );
+            // First check if the support_tickets table has the required columns
+            let ticketResult;
+
+            try {
+                // Try to insert with the expected schema
+                ticketResult = await query<{ id: string; ticket_number: string }>(
+                    `INSERT INTO support_tickets
+                    (user_id, subject, category, status, created_by_name, created_by_email)
+                    VALUES ($1, $2, $3, 'open', $4, $5)
+                    RETURNING id, ticket_number`,
+                    [data.userId || null, data.subject, data.category, data.name, data.email]
+                );
+            } catch (err) {
+                // If first attempt fails, try alternative schema that might be in the database
+                console.log('First schema attempt failed, trying alternative schema...');
+                ticketResult = await query<{ id: string; ticket_number: string }>(
+                    `INSERT INTO support_tickets
+                    (user_id, subject, category, status)
+                    VALUES ($1, $2, $3, 'open')
+                    RETURNING id, ticket_number`,
+                    [data.userId || null, data.subject, data.category]
+                );
+
+                // Store the contact information in ticket_contact_info table instead
+                await query(
+                    `INSERT INTO ticket_contact_info
+                    (ticket_id, name, email)
+                    VALUES ($1, $2, $3)`,
+                    [ticketResult[0].id, data.name, data.email]
+                );
+            }
 
             if (!ticketResult || ticketResult.length === 0) {
                 throw new Error('Failed to create ticket');
@@ -96,8 +119,11 @@ export const ticketService = {
             const ticket = await queryOne(
                 `SELECT t.id, t.ticket_number as "ticketNumber", t.subject, t.category,
                     t.status, t.created_at as "createdAt", t.updated_at as "lastUpdated",
-                    t.user_id as "userId", t.name, t.email
+                    t.user_id as "userId",
+                    COALESCE(t.created_by_name, c.name) as name,
+                    COALESCE(t.created_by_email, c.email) as email
                 FROM support_tickets t
+                LEFT JOIN ticket_contact_info c ON t.id = c.ticket_id
                 WHERE t.id = $1`,
                 [id]
             );
@@ -159,8 +185,11 @@ export const ticketService = {
             const tickets = await query(
                 `SELECT t.id, t.ticket_number as "ticketNumber", t.subject, t.category, t.status,
                     t.created_at as "createdAt", t.updated_at as "lastUpdated", t.user_id as "userId",
+                    COALESCE(t.created_by_name, c.name) as name,
+                    COALESCE(t.created_by_email, c.email) as email,
                     (SELECT COUNT(*) FROM ticket_messages WHERE ticket_id = t.id) as "messageCount"
                 FROM support_tickets t
+                LEFT JOIN ticket_contact_info c ON t.id = c.ticket_id
                 WHERE t.user_id = $1 ${statusCondition}
                 ORDER BY t.updated_at DESC`,
                 queryParams
