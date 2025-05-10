@@ -15,19 +15,42 @@ export const metadata: Metadata = {
 export default async function SupportPage({ searchParams }: { searchParams?: { tab?: string } }) {
     // Get the user session to check if the user is logged in
     const session = await getServerSession(authOptions);
+    const user = session?.user || null;
+    const isAdmin = user?.roles?.includes('admin') || false;
 
     // If there's a session, user is logged in, provide user data
     // If not, the SupportContent component will handle unauthenticated users
 
     // Check if there's a tab query parameter
-    const activeTab = searchParams?.tab || 'contact';
+    let initialTab = searchParams?.tab;
 
-    // If user is not logged in and trying to access tickets tab, redirect to login
-    if (!session?.user && activeTab === 'tickets') {
-        redirect('/login?callbackUrl=/support?tab=tickets');
+    // Determine the effective initial tab
+    if (isAdmin) {
+        // Admins should only see 'tickets'. If URL specifies 'contact' or 'faq', or no tab, force 'tickets'.
+        if (!initialTab || initialTab === 'contact' || initialTab === 'faq') {
+            initialTab = 'tickets';
+        }
+    } else {
+        // Non-admins default to 'contact' if no tab is specified.
+        if (!initialTab) {
+            initialTab = 'contact';
+        }
     }
 
-    return (
-        <SupportContent user={session?.user || null} initialActiveTab={activeTab as 'contact' | 'faq' | 'tickets'} />
-    );
+    // If user is not logged in and trying to access tickets tab, redirect to login
+    if (!user && initialTab === 'tickets') {
+        redirect(`/login?callbackUrl=/support?tab=tickets`);
+    }
+
+    // If the URL's tab param is different for an admin (e.g., tried to access contact/faq), redirect.
+    if (
+        isAdmin &&
+        searchParams?.tab &&
+        searchParams.tab !== 'tickets' &&
+        (searchParams.tab === 'contact' || searchParams.tab === 'faq')
+    ) {
+        redirect('/support?tab=tickets');
+    }
+
+    return <SupportContent user={user} initialActiveTab={initialTab as 'contact' | 'faq' | 'tickets'} />;
 }

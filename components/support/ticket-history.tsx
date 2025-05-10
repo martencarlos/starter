@@ -16,6 +16,8 @@ import { ClockIcon, MessageSquareIcon, RefreshCw, TicketIcon } from 'lucide-reac
 
 // components/support/ticket-history.tsx
 
+// components/support/ticket-history.tsx
+
 // Status badge variant mapping
 const statusVariants = {
     open: 'default',
@@ -36,11 +38,12 @@ const formatDate = (dateString: string) => {
 };
 
 interface TicketHistoryProps {
-    onSwitchToContactTab?: () => void;
+    onSwitchToContactTab?: () => void; // Make this optional as admins won't use it
+    isAdmin?: boolean; // Add isAdmin prop
 }
 
-export function TicketHistory({ onSwitchToContactTab }: TicketHistoryProps) {
-    const { tickets, isLoading, error, refreshTickets } = useSupport();
+export function TicketHistory({ onSwitchToContactTab, isAdmin = false }: TicketHistoryProps) {
+    const { tickets, isLoading, error, refreshTickets } = useSupport(); // isAdmin default to false
     const [activeStatus, setActiveStatus] = useState<'all' | 'open' | 'closed'>('all');
     const [refreshing, setRefreshing] = useState(false);
 
@@ -71,10 +74,12 @@ export function TicketHistory({ onSwitchToContactTab }: TicketHistoryProps) {
                             <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
                             Refresh
                         </Button>
-                        <Button size='sm' onClick={onSwitchToContactTab}>
-                            <TicketIcon className='mr-2 h-4 w-4' />
-                            New Ticket
-                        </Button>
+                        {!isAdmin && onSwitchToContactTab && (
+                            <Button size='sm' onClick={onSwitchToContactTab}>
+                                <TicketIcon className='mr-2 h-4 w-4' />
+                                New Ticket
+                            </Button>
+                        )}
                     </div>
                 </div>
             </CardHeader>
