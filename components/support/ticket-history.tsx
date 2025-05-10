@@ -1,49 +1,22 @@
+// components/support/ticket-history.tsx
 'use client';
+
+import { useState } from 'react';
 
 import Link from 'next/link';
 
+import { Ticket, useSupport } from '@/components/support/support-context';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-import { ClockIcon, MessageSquareIcon, TicketIcon } from 'lucide-react';
+import { ClockIcon, MessageSquareIcon, RefreshCw, TicketIcon } from 'lucide-react';
 
-// This is a simulated component for ticket history
-// In a real application, you would fetch the user's ticket history from the database
+// components/support/ticket-history.tsx
 
-// Define sample ticket data
-const sampleTickets = [
-    {
-        id: 'TICKET-1234',
-        subject: 'Account access problem',
-        status: 'open',
-        category: 'account',
-        createdAt: '2023-11-15T14:23:45Z',
-        lastUpdated: '2023-11-15T15:30:12Z',
-        messages: 3
-    },
-    {
-        id: 'TICKET-5678',
-        subject: 'Billing question about my subscription',
-        status: 'closed',
-        category: 'billing',
-        createdAt: '2023-10-28T09:12:33Z',
-        lastUpdated: '2023-10-30T11:45:20Z',
-        messages: 5
-    },
-    {
-        id: 'TICKET-9012',
-        subject: 'How do I change my password?',
-        status: 'resolved',
-        category: 'account',
-        createdAt: '2023-09-05T18:07:22Z',
-        lastUpdated: '2023-09-06T10:15:30Z',
-        messages: 2
-    }
-];
-
-// Ticket status badge variant mapping
+// Status badge variant mapping
 const statusVariants = {
     open: 'default',
     pending: 'secondary',
@@ -62,30 +35,24 @@ const formatDate = (dateString: string) => {
     });
 };
 
-interface TicketHistoryProps {
-    userId: string;
-}
+export function TicketHistory() {
+    const { tickets, isLoading, error, refreshTickets } = useSupport();
+    const [activeStatus, setActiveStatus] = useState<'all' | 'open' | 'closed'>('all');
+    const [refreshing, setRefreshing] = useState(false);
 
-export function TicketHistory({ userId }: TicketHistoryProps) {
-    // In a real application, you would fetch the user's tickets from an API
-    // const [tickets, setTickets] = useState([]);
-    // const [isLoading, setIsLoading] = useState(true);
+    // Filter tickets based on active status tab
+    const filteredTickets =
+        activeStatus === 'all'
+            ? tickets
+            : activeStatus === 'open'
+              ? tickets.filter((ticket) => ticket.status === 'open' || ticket.status === 'pending')
+              : tickets.filter((ticket) => ticket.status === 'closed' || ticket.status === 'resolved');
 
-    // useEffect(() => {
-    //     async function fetchTickets() {
-    //         try {
-    //             const response = await fetch(`/api/support/tickets/user/${userId}`);
-    //             const data = await response.json();
-    //             setTickets(data.tickets);
-    //         } catch (error) {
-    //             console.error('Error fetching tickets:', error);
-    //         } finally {
-    //             setIsLoading(false);
-    //         }
-    //     }
-    //
-    //     fetchTickets();
-    // }, [userId]);
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        await refreshTickets();
+        setRefreshing(false);
+    };
 
     return (
         <Card>
@@ -95,16 +62,22 @@ export function TicketHistory({ userId }: TicketHistoryProps) {
                         <CardTitle>Your Support Tickets</CardTitle>
                         <CardDescription>View and track your support requests</CardDescription>
                     </div>
-                    <Button asChild size='sm'>
-                        <Link href='/support?tab=contact'>
-                            <TicketIcon className='mr-2 h-4 w-4' />
-                            New Ticket
-                        </Link>
-                    </Button>
+                    <div className='flex gap-2'>
+                        <Button variant='outline' size='sm' onClick={handleRefresh} disabled={refreshing || isLoading}>
+                            <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                            Refresh
+                        </Button>
+                        <Button asChild size='sm'>
+                            <Link href='/support?tab=contact'>
+                                <TicketIcon className='mr-2 h-4 w-4' />
+                                New Ticket
+                            </Link>
+                        </Button>
+                    </div>
                 </div>
             </CardHeader>
             <CardContent>
-                <Tabs defaultValue='all'>
+                <Tabs defaultValue='all' onValueChange={(value) => setActiveStatus(value as 'all' | 'open' | 'closed')}>
                     <TabsList className='mb-4'>
                         <TabsTrigger value='all'>All Tickets</TabsTrigger>
                         <TabsTrigger value='open'>Open</TabsTrigger>
@@ -112,23 +85,15 @@ export function TicketHistory({ userId }: TicketHistoryProps) {
                     </TabsList>
 
                     <TabsContent value='all' className='mt-0'>
-                        <TicketList tickets={sampleTickets} />
+                        <TicketList tickets={filteredTickets} isLoading={isLoading} error={error} />
                     </TabsContent>
 
                     <TabsContent value='open' className='mt-0'>
-                        <TicketList
-                            tickets={sampleTickets.filter(
-                                (ticket) => ticket.status === 'open' || ticket.status === 'pending'
-                            )}
-                        />
+                        <TicketList tickets={filteredTickets} isLoading={isLoading} error={error} />
                     </TabsContent>
 
                     <TabsContent value='closed' className='mt-0'>
-                        <TicketList
-                            tickets={sampleTickets.filter(
-                                (ticket) => ticket.status === 'closed' || ticket.status === 'resolved'
-                            )}
-                        />
+                        <TicketList tickets={filteredTickets} isLoading={isLoading} error={error} />
                     </TabsContent>
                 </Tabs>
             </CardContent>
@@ -137,10 +102,48 @@ export function TicketHistory({ userId }: TicketHistoryProps) {
 }
 
 interface TicketListProps {
-    tickets: typeof sampleTickets;
+    tickets: Ticket[];
+    isLoading: boolean;
+    error: string | null;
 }
 
-function TicketList({ tickets }: TicketListProps) {
+function TicketList({ tickets, isLoading, error }: TicketListProps) {
+    if (isLoading) {
+        return (
+            <div className='space-y-4'>
+                {[1, 2, 3].map((i) => (
+                    <div key={i} className='rounded-md border p-4'>
+                        <div className='flex items-start justify-between'>
+                            <div className='w-full space-y-3'>
+                                <div className='flex gap-2'>
+                                    <Skeleton className='h-5 w-16 rounded-full' />
+                                    <Skeleton className='h-5 w-24' />
+                                </div>
+                                <Skeleton className='h-6 w-3/4' />
+                                <div className='flex gap-4'>
+                                    <Skeleton className='h-4 w-24' />
+                                    <Skeleton className='h-4 w-32' />
+                                </div>
+                            </div>
+                            <Skeleton className='h-9 w-24' />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className='rounded-md border py-8 text-center'>
+                <p className='text-destructive'>{error}</p>
+                <Button variant='outline' size='sm' className='mt-4' onClick={() => window.location.reload()}>
+                    Try Again
+                </Button>
+            </div>
+        );
+    }
+
     if (tickets.length === 0) {
         return (
             <div className='border-border flex flex-col items-center justify-center rounded-md border py-10 text-center'>
@@ -162,7 +165,7 @@ function TicketList({ tickets }: TicketListProps) {
                             <Badge variant={statusVariants[ticket.status as keyof typeof statusVariants] || 'default'}>
                                 {ticket.status}
                             </Badge>
-                            <span className='text-muted-foreground text-sm'>{ticket.id}</span>
+                            <span className='text-muted-foreground text-sm'>{ticket.ticketNumber}</span>
                         </div>
                         <h4 className='font-medium'>{ticket.subject}</h4>
                         <div className='text-muted-foreground mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs'>
@@ -172,7 +175,7 @@ function TicketList({ tickets }: TicketListProps) {
                             </span>
                             <span className='flex items-center'>
                                 <MessageSquareIcon className='mr-1 h-3 w-3' />
-                                {ticket.messages} message{ticket.messages !== 1 ? 's' : ''}
+                                {ticket.messageCount} message{ticket.messageCount !== 1 ? 's' : ''}
                             </span>
                         </div>
                     </div>

@@ -19,21 +19,31 @@ const statusVariants = {
 } as const;
 
 // Types for ticket and messages
+interface User {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+}
+
 interface Message {
     id: string;
     content: string;
-    sender: 'user' | 'support';
+    sender: 'user' | 'support' | 'system';
     timestamp: string;
+    user: User | null;
 }
 
 interface Ticket {
     id: string;
+    ticketNumber: string;
     subject: string;
     status: 'open' | 'pending' | 'resolved' | 'closed';
     category: string;
     createdAt: string;
     lastUpdated: string;
     userId: string;
+    name: string;
+    email: string;
     messages: Message[];
 }
 
@@ -68,34 +78,28 @@ export function TicketDetailView({ ticket, userId }: TicketDetailViewProps) {
         setIsSubmitting(true);
 
         try {
-            // In a real app, you would send the reply to your API
-            // const response = await fetch(`/api/support/tickets/${ticket.id}/reply`, {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify({ content: replyText })
-            // });
+            const response = await fetch(`/api/support/tickets/${ticket.id}/reply`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: replyText })
+            });
 
-            // Simulate API call for demo
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            const responseData = await response.json();
 
-            // Create a new message object
-            const newMessage: Message = {
-                id: `msg-${new Date().getTime()}`,
-                content: replyText,
-                sender: 'user',
-                timestamp: new Date().toISOString()
-            };
+            if (!response.ok) {
+                throw new Error(responseData.message || 'Failed to send reply');
+            }
 
-            // Update ticket messages state
-            setTicketMessages((prev) => [...prev, newMessage]);
+            // Add the new message to the state
+            setTicketMessages((prev) => [...prev, responseData.reply]);
 
             // Clear the reply text
             setReplyText('');
 
-            // Check if we need to reopen the ticket
-            if (ticketStatus === 'closed' || ticketStatus === 'resolved') {
-                setTicketStatus('open');
-                toast.info('This ticket has been reopened due to your new reply');
+            // If the status has changed (like a reopened ticket), update the status
+            if (responseData.status && responseData.status !== ticketStatus) {
+                setTicketStatus(responseData.status);
+                toast.info(`This ticket has been ${responseData.status === 'open' ? 'reopened' : responseData.status}`);
             }
 
             toast.success('Your reply has been sent');
@@ -110,18 +114,26 @@ export function TicketDetailView({ ticket, userId }: TicketDetailViewProps) {
     // Handler for closing ticket
     const handleCloseTicket = async () => {
         try {
-            // In a real app, you would send a request to your API
-            // const response = await fetch(`/api/support/tickets/${ticket.id}/status`, {
-            //     method: 'PATCH',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify({ status: 'closed' })
-            // });
+            const response = await fetch(`/api/support/tickets/${ticket.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'closed' })
+            });
 
-            // Simulate API call for demo
-            await new Promise((resolve) => setTimeout(resolve, 500));
+            const responseData = await response.json();
+
+            if (!response.ok) {
+                throw new Error(responseData.message || 'Failed to close ticket');
+            }
 
             // Update status
             setTicketStatus('closed');
+
+            // Add the system message if it was returned
+            if (responseData.systemMessage) {
+                setTicketMessages((prev) => [...prev, responseData.systemMessage]);
+            }
+
             toast.success('Ticket has been closed');
         } catch (error) {
             toast.error('Failed to close ticket. Please try again.');
@@ -132,18 +144,26 @@ export function TicketDetailView({ ticket, userId }: TicketDetailViewProps) {
     // Handler for reopening ticket
     const handleReopenTicket = async () => {
         try {
-            // In a real app, you would send a request to your API
-            // const response = await fetch(`/api/support/tickets/${ticket.id}/status`, {
-            //     method: 'PATCH',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify({ status: 'open' })
-            // });
+            const response = await fetch(`/api/support/tickets/${ticket.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'open' })
+            });
 
-            // Simulate API call for demo
-            await new Promise((resolve) => setTimeout(resolve, 500));
+            const responseData = await response.json();
+
+            if (!response.ok) {
+                throw new Error(responseData.message || 'Failed to reopen ticket');
+            }
 
             // Update status
             setTicketStatus('open');
+
+            // Add the system message if it was returned
+            if (responseData.systemMessage) {
+                setTicketMessages((prev) => [...prev, responseData.systemMessage]);
+            }
+
             toast.success('Ticket has been reopened');
         } catch (error) {
             toast.error('Failed to reopen ticket. Please try again.');
@@ -154,12 +174,23 @@ export function TicketDetailView({ ticket, userId }: TicketDetailViewProps) {
     // Determine if ticket is closed or resolved
     const isTicketClosed = ticketStatus === 'closed' || ticketStatus === 'resolved';
 
+    // Helper to get message style class based on sender
+    const getMessageClass = (sender: string) => {
+        if (sender === 'system') {
+            return 'bg-secondary/40 text-secondary-foreground mx-12 text-center text-sm';
+        } else if (sender === 'user') {
+            return 'bg-primary text-primary-foreground ml-12';
+        } else {
+            return 'bg-muted mr-12';
+        }
+    };
+
     return (
         <div className='space-y-6'>
             <Card>
                 <CardHeader className='flex flex-row items-center justify-between border-b pb-4'>
                     <CardTitle className='text-lg'>Conversation</CardTitle>
-                    <Badge variant={statusVariants[ticketStatus]}>
+                    <Badge variant={statusVariants[ticketStatus as keyof typeof statusVariants]}>
                         {ticketStatus.charAt(0).toUpperCase() + ticketStatus.slice(1)}
                     </Badge>
                 </CardHeader>
@@ -168,21 +199,31 @@ export function TicketDetailView({ ticket, userId }: TicketDetailViewProps) {
                         {ticketMessages.map((message) => (
                             <div
                                 key={message.id}
-                                className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                <div
-                                    className={`max-w-[80%] rounded-lg px-4 py-3 ${
-                                        message.sender === 'user'
-                                            ? 'bg-primary text-primary-foreground ml-12'
-                                            : 'bg-muted mr-12'
-                                    }`}>
+                                className={`flex ${
+                                    message.sender === 'system'
+                                        ? 'justify-center'
+                                        : message.sender === 'user'
+                                          ? 'justify-end'
+                                          : 'justify-start'
+                                }`}>
+                                <div className={`max-w-[80%] rounded-lg px-4 py-3 ${getMessageClass(message.sender)}`}>
                                     <div className='space-y-2'>
-                                        <p className='break-words'>{message.content}</p>
+                                        {message.sender === 'system' ? (
+                                            <p className='italic'>{message.content}</p>
+                                        ) : (
+                                            <p className='break-words'>{message.content}</p>
+                                        )}
                                         <p
                                             className={`text-xs ${
                                                 message.sender === 'user'
                                                     ? 'text-primary-foreground/80'
-                                                    : 'text-muted-foreground'
+                                                    : message.sender === 'system'
+                                                      ? 'text-secondary-foreground/80'
+                                                      : 'text-muted-foreground'
                                             }`}>
+                                            {message.sender !== 'system' && message.user?.name && (
+                                                <span className='mr-2 font-medium'>{message.user.name}</span>
+                                            )}
                                             {formatDate(message.timestamp)}
                                         </p>
                                     </div>
@@ -242,7 +283,7 @@ export function TicketDetailView({ ticket, userId }: TicketDetailViewProps) {
                     <dl className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
                         <div>
                             <dt className='text-muted-foreground text-sm font-medium'>Ticket ID</dt>
-                            <dd>{ticket.id}</dd>
+                            <dd>{ticket.ticketNumber}</dd>
                         </div>
                         <div>
                             <dt className='text-muted-foreground text-sm font-medium'>Category</dt>

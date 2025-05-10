@@ -1,7 +1,9 @@
+// components/support/support-ticket-form.tsx
 'use client';
 
 import { useState } from 'react';
 
+import { TicketCategory, useSupport } from '@/components/support/support-context';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +17,8 @@ import { Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+// components/support/support-ticket-form.tsx
+
 // Type for the form values
 type SupportTicketFormValues = z.infer<typeof ticketSchema>;
 
@@ -26,12 +30,14 @@ interface SupportTicketFormProps {
     } | null;
     onSuccess: (message: string) => void;
     onError: (message: string) => void;
+    onTicketCreated?: () => void;
 }
 
-export function SupportTicketForm({ user, onSuccess, onError }: SupportTicketFormProps) {
+export function SupportTicketForm({ user, onSuccess, onError, onTicketCreated }: SupportTicketFormProps) {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [formSubmitted, setFormSubmitted] = useState<boolean>(false);
+    const { createTicket } = useSupport();
 
     // Set default values based on authenticated user
     const defaultValues: Partial<SupportTicketFormValues> = {
@@ -42,7 +48,6 @@ export function SupportTicketForm({ user, onSuccess, onError }: SupportTicketFor
     const {
         register,
         handleSubmit,
-        control,
         reset,
         formState: { errors },
         setValue
@@ -56,26 +61,28 @@ export function SupportTicketForm({ user, onSuccess, onError }: SupportTicketFor
         setSubmitError(null);
 
         try {
-            // Submit the support ticket to the API
-            const response = await fetch('/api/support/tickets', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ...data,
-                    userId: user?.id || null
-                })
+            // Use the context's createTicket function instead of direct fetch
+            const result = await createTicket({
+                name: data.name,
+                email: data.email,
+                subject: data.subject,
+                category: data.category as TicketCategory,
+                message: data.message
             });
 
-            const responseData = await response.json();
+            if (result.success) {
+                // Show success message
+                onSuccess(`Your support ticket #${result.ticketId} has been submitted successfully`);
+                setFormSubmitted(true);
+                reset(); // Reset the form values
 
-            if (!response.ok) {
-                throw new Error(responseData.message || 'Failed to submit support ticket');
+                // Notify parent component if callback provided
+                if (onTicketCreated) {
+                    onTicketCreated();
+                }
+            } else {
+                throw new Error(result.error || 'Failed to submit support ticket');
             }
-
-            // Success! Reset the form and show a success message
-            onSuccess(`Your support ticket #${responseData.ticketId} has been submitted successfully`);
-            setFormSubmitted(true);
-            reset(); // Reset the form values
         } catch (error) {
             setSubmitError(error instanceof Error ? error.message : 'An unexpected error occurred');
             onError('Failed to submit your support ticket. Please try again.');

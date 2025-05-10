@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { authOptions } from '@/lib/auth-options';
+import { MessageSender, ticketService } from '@/lib/services/ticket-service';
 
 import { getServerSession } from 'next-auth/next';
 import { z } from 'zod';
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         }
 
         const userId = session.user.id;
-        const isAdmin = session.user.roles && session.user.roles.includes('admin');
+        const roles = session.user.roles || [];
 
         // Parse and validate request body
         const body = await req.json();
@@ -36,36 +37,48 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
         const { content } = validationResult.data;
 
-        // In a real app, check if the ticket exists and belongs to the user
-        // const ticket = await db.query('SELECT * FROM tickets WHERE id = ?', [params.id]);
+        // Check if user has permission to reply to this ticket
+        const hasAccess = await ticketService.hasTicketAccess(params.id, userId, roles);
 
-        // For demo purposes, we'll assume the ticket exists and the user has permission
+        if (!hasAccess) {
+            return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+        }
 
-        // In a real app, insert the reply into your database
-        // const replyId = await db.query(
-        //     'INSERT INTO ticket_messages (ticket_id, user_id, content, is_from_user) VALUES (?, ?, ?, ?)',
-        //     [params.id, userId, content, true]
-        // );
+        // Determine the sender type based on user role
+        let sender: MessageSender = 'user';
+        if (roles.includes('admin') || roles.includes('support_agent')) {
+            sender = 'support';
+        }
 
-        // Update the ticket's last_updated field and set status to open if it was closed
-        // await db.query(
-        //     'UPDATE tickets SET last_updated = NOW(), status = CASE WHEN status IN ("closed", "resolved") THEN "open" ELSE status END WHERE id = ?',
-        //     [params.id]
-        // );
+        // Add the message to the ticket
+        const result = await ticketService.addMessage(params.id, userId, content, sender);
 
-        // Generate a mock reply ID
-        const replyId = `msg-${Date.now()}`;
-        const timestamp = new Date().toISOString();
+        if (!result.success) {
+            return NextResponse.json({ message: result.error || 'Failed to add reply' }, { status: 500 });
+        }
+
+        // Check if we need to update ticket status (e.g., reopen a closed ticket)
+        const ticket = await ticketService.getTicketById(params.id);
+        let updatedStatus = null;
+
+        if (ticket && (ticket.status === 'closed' || ticket.status === 'resolved')) {
+            // Reopen the ticket
+            const statusResult = await ticketService.updateTicketStatus(
+                params.id,
+                'open',
+                userId,
+                session.user.name || undefined
+            );
+
+            if (statusResult.success) {
+                updatedStatus = 'open';
+            }
+        }
 
         return NextResponse.json({
             message: 'Reply added successfully',
-            reply: {
-                id: replyId,
-                content,
-                sender: 'user',
-                timestamp,
-                userId
-            }
+            reply: result.message,
+            status: updatedStatus
         });
     } catch (error) {
         console.error('Error adding reply:', error);

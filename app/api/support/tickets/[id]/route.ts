@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { authOptions } from '@/lib/auth-options';
+import { TicketStatus, ticketService } from '@/lib/services/ticket-service';
 
 import { getServerSession } from 'next-auth/next';
 
@@ -15,58 +16,20 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
         }
 
         const userId = session.user.id;
-        const isAdmin = session.user.roles && session.user.roles.includes('admin');
+        const roles = session.user.roles || [];
 
-        // In a real app, fetch the ticket from your database
-        // const ticket = await db.query('SELECT * FROM tickets WHERE id = ?', [params.id]);
+        // Check if user has permission to view this ticket
+        const hasAccess = await ticketService.hasTicketAccess(params.id, userId, roles);
 
-        // For demo purposes, we'll return mock data
-        // In a real application, you would fetch this from your database
-        const sampleTickets = {
-            'TICKET-1234': {
-                id: 'TICKET-1234',
-                subject: 'Account access problem',
-                status: 'open',
-                category: 'account',
-                createdAt: '2023-11-15T14:23:45Z',
-                lastUpdated: '2023-11-15T15:30:12Z',
-                userId: 'user-123',
-                messages: [
-                    {
-                        id: 'msg-1',
-                        content:
-                            'I\'m having trouble logging into my account. It says "invalid credentials" but I\'m sure my password is correct.',
-                        sender: 'user',
-                        timestamp: '2023-11-15T14:23:45Z'
-                    },
-                    {
-                        id: 'msg-2',
-                        content:
-                            'Thank you for reaching out. Could you please try resetting your password using the "Forgot Password" link on the login page?',
-                        sender: 'support',
-                        timestamp: '2023-11-15T14:45:12Z'
-                    },
-                    {
-                        id: 'msg-3',
-                        content: "I tried that, but I'm not receiving the password reset email.",
-                        sender: 'user',
-                        timestamp: '2023-11-15T15:30:12Z'
-                    }
-                ]
-            }
-        };
+        if (!hasAccess) {
+            return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+        }
 
-        const ticket = sampleTickets[params.id as keyof typeof sampleTickets];
+        // Get the ticket with messages
+        const ticket = await ticketService.getTicketById(params.id);
 
         if (!ticket) {
             return NextResponse.json({ message: 'Ticket not found' }, { status: 404 });
-        }
-
-        // Check if user has permission to view this ticket
-        const hasPermission = isAdmin || ticket.userId === userId;
-
-        if (!hasPermission) {
-            return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
         }
 
         return NextResponse.json({ ticket });
@@ -88,7 +51,14 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         }
 
         const userId = session.user.id;
-        const isAdmin = session.user.roles && session.user.roles.includes('admin');
+        const roles = session.user.roles || [];
+
+        // Check if user has permission to update this ticket
+        const hasAccess = await ticketService.hasTicketAccess(params.id, userId, roles);
+
+        if (!hasAccess) {
+            return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+        }
 
         // Parse request body
         const body = await req.json();
@@ -99,13 +69,17 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
             return NextResponse.json({ message: 'Invalid status' }, { status: 400 });
         }
 
-        // In a real app, check if the ticket exists and belongs to the user
-        // const ticket = await db.query('SELECT * FROM tickets WHERE id = ?', [params.id]);
+        // Update the ticket status
+        const result = await ticketService.updateTicketStatus(
+            params.id,
+            status as TicketStatus,
+            userId,
+            session.user.name || undefined
+        );
 
-        // For demo purposes, we'll assume the ticket exists and the user has permission
-
-        // In a real app, update the ticket status in your database
-        // await db.query('UPDATE tickets SET status = ?, updated_at = NOW() WHERE id = ?', [status, params.id]);
+        if (!result.success) {
+            return NextResponse.json({ message: result.error || 'Failed to update ticket status' }, { status: 500 });
+        }
 
         return NextResponse.json({
             message: 'Ticket status updated successfully',

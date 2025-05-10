@@ -1,72 +1,37 @@
+// components/support/support-dashboard-widget.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import Link from 'next/link';
 
+import { SupportProvider, useSupport } from '@/components/support/support-context';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
-import { CheckCircle2, TicketIcon } from 'lucide-react';
+import { RefreshCw, TicketIcon } from 'lucide-react';
 
-interface Ticket {
-    id: string;
-    subject: string;
-    status: 'open' | 'pending' | 'resolved' | 'closed';
-    lastUpdated: string;
-}
+// components/support/support-dashboard-widget.tsx
 
 interface SupportDashboardWidgetProps {
     userId: string;
 }
 
 export function SupportDashboardWidget({ userId }: SupportDashboardWidgetProps) {
-    const [tickets, setTickets] = useState<Ticket[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    return (
+        <SupportProvider userId={userId}>
+            <SupportDashboardContent />
+        </SupportProvider>
+    );
+}
 
-    // In a real app, fetch ticket data from the API
-    useEffect(() => {
-        const fetchTickets = async () => {
-            setIsLoading(true);
-            try {
-                // In a real app, this would be an API call
-                // const response = await fetch('/api/support/tickets/user');
-                // const data = await response.json();
-                // setTickets(data.tickets);
+function SupportDashboardContent() {
+    const { tickets, isLoading, error, refreshTickets } = useSupport();
+    const [refreshing, setRefreshing] = useState(false);
 
-                // For demo, simulate API call with sample data
-                await new Promise((resolve) => setTimeout(resolve, 1000));
-
-                setTickets([
-                    {
-                        id: 'TICKET-1234',
-                        subject: 'Account access problem',
-                        status: 'open',
-                        lastUpdated: '2023-11-15T15:30:12Z'
-                    },
-                    {
-                        id: 'TICKET-5678',
-                        subject: 'Billing question about my subscription',
-                        status: 'closed',
-                        lastUpdated: '2023-10-30T11:45:20Z'
-                    }
-                ]);
-            } catch (err) {
-                console.error('Failed to fetch tickets:', err);
-                setError('Failed to load your support tickets');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchTickets();
-    }, [userId]);
-
-    const activeTickets = tickets.filter((ticket) => ticket.status === 'open' || ticket.status === 'pending');
-
+    // Format date to readable format
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
 
@@ -75,6 +40,15 @@ export function SupportDashboardWidget({ userId }: SupportDashboardWidgetProps) 
             day: 'numeric'
         });
     };
+
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        await refreshTickets();
+        setRefreshing(false);
+    };
+
+    // Filter for active tickets
+    const activeTickets = tickets.filter((ticket) => ticket.status === 'open' || ticket.status === 'pending');
 
     return (
         <Card>
@@ -100,6 +74,15 @@ export function SupportDashboardWidget({ userId }: SupportDashboardWidgetProps) 
                 ) : error ? (
                     <div className='py-6 text-center'>
                         <p className='text-muted-foreground'>{error}</p>
+                        <Button
+                            variant='outline'
+                            size='sm'
+                            className='mt-2'
+                            onClick={handleRefresh}
+                            disabled={refreshing}>
+                            <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                            Try Again
+                        </Button>
                     </div>
                 ) : tickets.length === 0 ? (
                     <div className='py-6 text-center'>
@@ -141,15 +124,26 @@ export function SupportDashboardWidget({ userId }: SupportDashboardWidgetProps) 
             </CardContent>
             <CardFooter className='border-t pt-3'>
                 <div className='flex w-full items-center justify-between'>
-                    <Button variant='ghost' size='sm' asChild>
-                        <Link href='/support?tab=tickets'>View all tickets</Link>
+                    <Button
+                        variant='ghost'
+                        size='sm'
+                        onClick={handleRefresh}
+                        disabled={refreshing || isLoading}
+                        className='gap-1'>
+                        <RefreshCw className={`h-3 w-3 ${refreshing ? 'animate-spin' : ''}`} />
+                        Refresh
                     </Button>
-                    <Button size='sm' asChild>
-                        <Link href='/support?tab=contact'>
-                            <TicketIcon className='mr-2 h-4 w-4' />
-                            New ticket
-                        </Link>
-                    </Button>
+                    <div className='flex gap-2'>
+                        <Button variant='ghost' size='sm' asChild>
+                            <Link href='/support?tab=tickets'>View all</Link>
+                        </Button>
+                        <Button size='sm' asChild>
+                            <Link href='/support?tab=contact'>
+                                <TicketIcon className='mr-2 h-4 w-4' />
+                                New ticket
+                            </Link>
+                        </Button>
+                    </div>
                 </div>
             </CardFooter>
         </Card>

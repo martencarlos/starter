@@ -1,3 +1,4 @@
+// components/support/support-content.tsx
 'use client';
 
 import { useState } from 'react';
@@ -5,6 +6,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
+import { SupportProvider } from '@/components/support/support-context';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +17,8 @@ import { SupportTicketForm } from './support-ticket-form';
 import { TicketHistory } from './ticket-history';
 import { CheckCircle2, HelpCircle, LifeBuoy, Mail, MessageSquare, Phone, TicketIcon } from 'lucide-react';
 import { toast } from 'sonner';
+
+// components/support/support-content.tsx
 
 interface SupportContentProps {
     user: {
@@ -52,178 +56,195 @@ export default function SupportContent({ user, initialActiveTab = 'contact' }: S
     };
 
     return (
-        <div className='container mx-auto max-w-4xl px-4 py-8'>
-            <div className='mb-8 flex flex-col items-start gap-2'>
-                <h1 className='text-3xl font-bold'>Support Center</h1>
-                <p className='text-muted-foreground'>Get help and support for your account and services</p>
+        <SupportProvider userId={user?.id}>
+            <div className='container mx-auto max-w-4xl px-4 py-8'>
+                <div className='mb-8 flex flex-col items-start gap-2'>
+                    <h1 className='text-3xl font-bold'>Support Center</h1>
+                    <p className='text-muted-foreground'>Get help and support for your account and services</p>
 
-                {/* Show user information if logged in */}
-                {user && (
-                    <div className='mt-2 flex items-center gap-2'>
-                        <Badge variant='outline' className='px-3 py-1'>
-                            <CheckCircle2 className='mr-1 h-3 w-3 text-green-500' />
-                            Logged in as {user.name || user.email}
-                        </Badge>
+                    {/* Show user information if logged in */}
+                    {user && (
+                        <div className='mt-2 flex items-center gap-2'>
+                            <Badge variant='outline' className='px-3 py-1'>
+                                <CheckCircle2 className='mr-1 h-3 w-3 text-green-500' />
+                                Logged in as {user.name || user.email}
+                            </Badge>
 
-                        {user.roles && user.roles.includes('admin') && <Badge variant='secondary'>Admin</Badge>}
+                            {user.roles && user.roles.includes('admin') && <Badge variant='secondary'>Admin</Badge>}
+                        </div>
+                    )}
+                </div>
+
+                <Tabs defaultValue={activeTab} value={activeTab} onValueChange={handleTabChange} className='w-full'>
+                    <TabsList className='mb-6 w-full justify-start'>
+                        <TabsTrigger value='contact'>
+                            <MessageSquare className='mr-2 h-4 w-4' />
+                            Contact Us
+                        </TabsTrigger>
+                        <TabsTrigger value='faq'>
+                            <HelpCircle className='mr-2 h-4 w-4' />
+                            FAQ
+                        </TabsTrigger>
+                        {user && (
+                            <TabsTrigger value='tickets'>
+                                <TicketIcon className='mr-2 h-4 w-4' />
+                                My Tickets
+                            </TabsTrigger>
+                        )}
+                    </TabsList>
+
+                    <div className='space-y-6'>
+                        <TabsContent value='contact' className='mt-0'>
+                            <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
+                                {/* Support Ticket Form */}
+                                <div className='md:col-span-2'>
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle>Submit a Support Request</CardTitle>
+                                            <CardDescription>
+                                                Fill out the form below and our support team will get back to you as
+                                                soon as possible.
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <SupportTicketForm
+                                                user={user}
+                                                onSuccess={(message) => {
+                                                    handleSuccess(message);
+                                                    // Automatically switch to the tickets tab after creating a ticket (if logged in)
+                                                    if (user) {
+                                                        setTimeout(() => {
+                                                            handleTabChange('tickets');
+                                                        }, 1500);
+                                                    }
+                                                }}
+                                                onError={handleError}
+                                                onTicketCreated={() => {
+                                                    // This is now handled by the context, but we keep the callback for flexibility
+                                                }}
+                                            />
+                                        </CardContent>
+                                    </Card>
+                                </div>
+
+                                {/* Contact Information */}
+                                <div>
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle>Contact Information</CardTitle>
+                                            <CardDescription>
+                                                Alternative ways to reach our support team
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent className='space-y-4'>
+                                            <div className='flex items-start gap-3'>
+                                                <Mail className='text-primary h-5 w-5' />
+                                                <div>
+                                                    <p className='font-medium'>Email Support</p>
+                                                    <p className='text-muted-foreground text-sm'>
+                                                        <a
+                                                            href='mailto:support@example.com'
+                                                            className='text-primary hover:underline'>
+                                                            support@example.com
+                                                        </a>
+                                                    </p>
+                                                    <p className='text-muted-foreground mt-1 text-xs'>
+                                                        Response time: 24-48 hours
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className='flex items-start gap-3'>
+                                                <Phone className='text-primary h-5 w-5' />
+                                                <div>
+                                                    <p className='font-medium'>Phone Support</p>
+                                                    <p className='text-muted-foreground text-sm'>
+                                                        <a
+                                                            href='tel:+1234567890'
+                                                            className='text-primary hover:underline'>
+                                                            +1 (234) 567-890
+                                                        </a>
+                                                    </p>
+                                                    <p className='text-muted-foreground mt-1 text-xs'>
+                                                        Monday-Friday: 9AM-5PM EST
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className='flex items-start gap-3'>
+                                                <LifeBuoy className='text-primary h-5 w-5' />
+                                                <div>
+                                                    <p className='font-medium'>Help Center</p>
+                                                    <p className='text-muted-foreground text-sm'>
+                                                        <Link href='/docs' className='text-primary hover:underline'>
+                                                            Browse our documentation
+                                                        </Link>
+                                                    </p>
+                                                    <p className='text-muted-foreground mt-1 text-xs'>
+                                                        Comprehensive guides and tutorials
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+
+                                    {/* Add a card for support hours or status */}
+                                    <Card className='mt-4'>
+                                        <CardHeader className='py-4'>
+                                            <CardTitle className='text-base'>Support Status</CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className='flex items-center gap-2'>
+                                                <span className='inline-block h-3 w-3 rounded-full bg-green-500'></span>
+                                                <span className='text-sm'>All systems operational</span>
+                                            </div>
+                                            <p className='text-muted-foreground mt-2 text-xs'>
+                                                Current response time: ~4 hours
+                                            </p>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            </div>
+                        </TabsContent>
+
+                        <TabsContent value='faq' className='mt-0'>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Frequently Asked Questions</CardTitle>
+                                    <CardDescription>Find quick answers to common questions</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <SupportFAQ />
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                        {user && (
+                            <TabsContent value='tickets' className='mt-0'>
+                                <TicketHistory />
+                            </TabsContent>
+                        )}
+                    </div>
+                </Tabs>
+
+                {/* Call to action for unauthenticated users */}
+                {!user && (
+                    <div className='mt-10 rounded-lg border p-6 text-center'>
+                        <h3 className='mb-2 text-xl font-semibold'>Have an account?</h3>
+                        <p className='text-muted-foreground mb-4'>
+                            Sign in to track your support requests and get faster help
+                        </p>
+                        <div className='flex justify-center gap-4'>
+                            <Button asChild variant='outline'>
+                                <Link href={`/login?callbackUrl=/support?tab=${activeTab}`}>Sign In</Link>
+                            </Button>
+                            <Button asChild>
+                                <Link href='/register'>Create Account</Link>
+                            </Button>
+                        </div>
                     </div>
                 )}
             </div>
-
-            <Tabs defaultValue={activeTab} value={activeTab} onValueChange={handleTabChange} className='w-full'>
-                <TabsList className='mb-6 w-full justify-start'>
-                    <TabsTrigger value='contact'>
-                        <MessageSquare className='mr-2 h-4 w-4' />
-                        Contact Us
-                    </TabsTrigger>
-                    <TabsTrigger value='faq'>
-                        <HelpCircle className='mr-2 h-4 w-4' />
-                        FAQ
-                    </TabsTrigger>
-                    {user && (
-                        <TabsTrigger value='tickets'>
-                            <TicketIcon className='mr-2 h-4 w-4' />
-                            My Tickets
-                        </TabsTrigger>
-                    )}
-                </TabsList>
-
-                <div className='space-y-6'>
-                    <TabsContent value='contact' className='mt-0'>
-                        <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
-                            {/* Support Ticket Form */}
-                            <div className='md:col-span-2'>
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Submit a Support Request</CardTitle>
-                                        <CardDescription>
-                                            Fill out the form below and our support team will get back to you as soon as
-                                            possible.
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <SupportTicketForm
-                                            user={user}
-                                            onSuccess={handleSuccess}
-                                            onError={handleError}
-                                        />
-                                    </CardContent>
-                                </Card>
-                            </div>
-
-                            {/* Contact Information */}
-                            <div>
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Contact Information</CardTitle>
-                                        <CardDescription>Alternative ways to reach our support team</CardDescription>
-                                    </CardHeader>
-                                    <CardContent className='space-y-4'>
-                                        <div className='flex items-start gap-3'>
-                                            <Mail className='text-primary h-5 w-5' />
-                                            <div>
-                                                <p className='font-medium'>Email Support</p>
-                                                <p className='text-muted-foreground text-sm'>
-                                                    <a
-                                                        href='mailto:support@example.com'
-                                                        className='text-primary hover:underline'>
-                                                        support@example.com
-                                                    </a>
-                                                </p>
-                                                <p className='text-muted-foreground mt-1 text-xs'>
-                                                    Response time: 24-48 hours
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        <div className='flex items-start gap-3'>
-                                            <Phone className='text-primary h-5 w-5' />
-                                            <div>
-                                                <p className='font-medium'>Phone Support</p>
-                                                <p className='text-muted-foreground text-sm'>
-                                                    <a href='tel:+1234567890' className='text-primary hover:underline'>
-                                                        +1 (234) 567-890
-                                                    </a>
-                                                </p>
-                                                <p className='text-muted-foreground mt-1 text-xs'>
-                                                    Monday-Friday: 9AM-5PM EST
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        <div className='flex items-start gap-3'>
-                                            <LifeBuoy className='text-primary h-5 w-5' />
-                                            <div>
-                                                <p className='font-medium'>Help Center</p>
-                                                <p className='text-muted-foreground text-sm'>
-                                                    <Link href='/docs' className='text-primary hover:underline'>
-                                                        Browse our documentation
-                                                    </Link>
-                                                </p>
-                                                <p className='text-muted-foreground mt-1 text-xs'>
-                                                    Comprehensive guides and tutorials
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-
-                                {/* Add a card for support hours or status */}
-                                <Card className='mt-4'>
-                                    <CardHeader className='py-4'>
-                                        <CardTitle className='text-base'>Support Status</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className='flex items-center gap-2'>
-                                            <span className='inline-block h-3 w-3 rounded-full bg-green-500'></span>
-                                            <span className='text-sm'>All systems operational</span>
-                                        </div>
-                                        <p className='text-muted-foreground mt-2 text-xs'>
-                                            Current response time: ~4 hours
-                                        </p>
-                                    </CardContent>
-                                </Card>
-                            </div>
-                        </div>
-                    </TabsContent>
-
-                    <TabsContent value='faq' className='mt-0'>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Frequently Asked Questions</CardTitle>
-                                <CardDescription>Find quick answers to common questions</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <SupportFAQ />
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-
-                    {user && (
-                        <TabsContent value='tickets' className='mt-0'>
-                            <TicketHistory userId={user.id} />
-                        </TabsContent>
-                    )}
-                </div>
-            </Tabs>
-
-            {/* Call to action for unauthenticated users */}
-            {!user && (
-                <div className='mt-10 rounded-lg border p-6 text-center'>
-                    <h3 className='mb-2 text-xl font-semibold'>Have an account?</h3>
-                    <p className='text-muted-foreground mb-4'>
-                        Sign in to track your support requests and get faster help
-                    </p>
-                    <div className='flex justify-center gap-4'>
-                        <Button asChild variant='outline'>
-                            <Link href={`/login?callbackUrl=/support?tab=${activeTab}`}>Sign In</Link>
-                        </Button>
-                        <Button asChild>
-                            <Link href='/register'>Create Account</Link>
-                        </Button>
-                    </div>
-                </div>
-            )}
-        </div>
+        </SupportProvider>
     );
 }

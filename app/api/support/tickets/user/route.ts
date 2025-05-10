@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { authOptions } from '@/lib/auth-options';
+import { query } from '@/lib/db';
 
 import { getServerSession } from 'next-auth/next';
 
@@ -21,56 +22,27 @@ export async function GET(req: NextRequest) {
         const { searchParams } = new URL(req.url);
         const status = searchParams.get('status');
 
-        // In a real app, fetch tickets from your database with optional filtering
-        // let query = 'SELECT * FROM tickets WHERE user_id = ?';
-        // let params = [userId];
+        // Build query parameters and SQL conditionals
+        const queryParams = [userId];
+        let statusCondition = '';
 
-        // if (status) {
-        //     query += ' AND status = ?';
-        //     params.push(status);
-        // }
-
-        // query += ' ORDER BY created_at DESC';
-        // const tickets = await db.query(query, params);
-
-        // For demo purposes, we'll return mock data
-        const sampleTickets = [
-            {
-                id: 'TICKET-1234',
-                subject: 'Account access problem',
-                status: 'open',
-                category: 'account',
-                createdAt: '2023-11-15T14:23:45Z',
-                lastUpdated: '2023-11-15T15:30:12Z',
-                messages: 3
-            },
-            {
-                id: 'TICKET-5678',
-                subject: 'Billing question about my subscription',
-                status: 'closed',
-                category: 'billing',
-                createdAt: '2023-10-28T09:12:33Z',
-                lastUpdated: '2023-10-30T11:45:20Z',
-                messages: 5
-            },
-            {
-                id: 'TICKET-9012',
-                subject: 'How do I change my password?',
-                status: 'resolved',
-                category: 'account',
-                createdAt: '2023-09-05T18:07:22Z',
-                lastUpdated: '2023-09-06T10:15:30Z',
-                messages: 2
-            }
-        ];
-
-        // Apply status filter if provided
-        let filteredTickets = sampleTickets;
         if (status) {
-            filteredTickets = sampleTickets.filter((ticket) => ticket.status === status);
+            statusCondition = 'AND t.status = $2';
+            queryParams.push(status);
         }
 
-        return NextResponse.json({ tickets: filteredTickets });
+        // Fetch the user's tickets with message count
+        const tickets = await query(
+            `SELECT t.id, t.ticket_number as "ticketNumber", t.subject, t.category, t.status,
+                t.created_at as "createdAt", t.updated_at as "lastUpdated", t.user_id as "userId",
+                (SELECT COUNT(*) FROM ticket_messages WHERE ticket_id = t.id) as "messageCount"
+            FROM support_tickets t
+            WHERE t.user_id = $1 ${statusCondition}
+            ORDER BY t.updated_at DESC`,
+            queryParams
+        );
+
+        return NextResponse.json({ tickets });
     } catch (error) {
         console.error('Error fetching user tickets:', error);
 
