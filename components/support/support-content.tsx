@@ -20,6 +20,12 @@ import { toast } from 'sonner';
 
 // components/support/support-content.tsx
 
+// components/support/support-content.tsx
+
+// components/support/support-content.tsx
+
+// components/support/support-content.tsx
+
 interface SupportContentProps {
     user: {
         id: string;
@@ -145,7 +151,7 @@ export default function SupportContent({ user, initialActiveTab = 'contact' }: S
                                                         <a
                                                             href='mailto:support@example.com'
                                                             className='text-primary hover:underline'>
-                                                            support@example.com
+                                                            admin@carlosmarten.com
                                                         </a>
                                                     </p>
                                                     <p className='text-muted-foreground mt-1 text-xs'>
@@ -162,7 +168,7 @@ export default function SupportContent({ user, initialActiveTab = 'contact' }: S
                                                         <a
                                                             href='tel:+1234567890'
                                                             className='text-primary hover:underline'>
-                                                            +1 (234) 567-890
+                                                            +34 747 47 84 04
                                                         </a>
                                                     </p>
                                                     <p className='text-muted-foreground mt-1 text-xs'>
@@ -176,12 +182,14 @@ export default function SupportContent({ user, initialActiveTab = 'contact' }: S
                                                 <div>
                                                     <p className='font-medium'>Help Center</p>
                                                     <p className='text-muted-foreground text-sm'>
-                                                        <Link href='/docs' className='text-primary hover:underline'>
+                                                        <Link
+                                                            href='/support?tab=faq'
+                                                            className='text-primary hover:underline'>
                                                             Browse our documentation
                                                         </Link>
                                                     </p>
                                                     <p className='text-muted-foreground mt-1 text-xs'>
-                                                        Comprehensive guides and tutorials
+                                                        Frequently asked questions
                                                     </p>
                                                 </div>
                                             </div>

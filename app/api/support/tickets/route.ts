@@ -18,17 +18,19 @@ export async function GET(req: NextRequest) {
         }
 
         const userId = session.user.id;
+        const roles = session.user.roles || [];
 
         // Get status filter from query parameters
         const { searchParams } = new URL(req.url);
         const status = searchParams.get('status') as TicketStatus | null;
 
-        // Use the ticket service to get user tickets
-        const tickets = await ticketService.getUserTickets(userId, status || undefined);
+        // Use the ticket service to get tickets (passing roles)
+        // This will fetch all tickets for admins, or just user's tickets for regular users
+        const tickets = await ticketService.getUserTickets(userId, status || undefined, roles);
 
         return NextResponse.json({ tickets });
     } catch (error) {
-        console.error('Error fetching user tickets:', error);
+        console.error('Error fetching tickets:', error);
 
         return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
     }

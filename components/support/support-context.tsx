@@ -9,6 +9,8 @@ import { toast } from 'sonner';
 
 // components/support/support-context.tsx
 
+// components/support/support-context.tsx
+
 // Create context with initial state
 interface SupportContextType {
     tickets: TicketType[];
@@ -38,6 +40,7 @@ export function SupportProvider({ children, userId }: { children: ReactNode; use
     }, [userId]);
 
     // Function to fetch tickets from the API
+    // In components/support/support-context.tsx - update the refreshTickets function
     const refreshTickets = async () => {
         if (!userId) return;
 

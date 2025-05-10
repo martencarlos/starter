@@ -170,28 +170,40 @@ export const ticketService = {
     },
 
     // Get tickets for a user
-    async getUserTickets(userId: string, status?: TicketStatus): Promise<Ticket[]> {
+    async getUserTickets(userId: string, status?: TicketStatus, roles?: string[]): Promise<Ticket[]> {
         try {
+            // Check if user is admin or support agent
+            const isAdmin = roles?.includes('admin') || roles?.includes('support_agent') || false;
+
             // Build query parameters and SQL conditionals
-            const queryParams = [userId];
+            const queryParams: any[] = [];
+            let userCondition = '';
             let statusCondition = '';
+            let paramIndex = 1;
+
+            // If admin, get all tickets, otherwise only user's tickets
+            if (!isAdmin) {
+                userCondition = `WHERE t.user_id = $${paramIndex}`;
+                queryParams.push(userId);
+                paramIndex++;
+            }
 
             if (status) {
-                statusCondition = 'AND t.status = $2';
+                statusCondition = isAdmin ? `WHERE t.status = $${paramIndex}` : `AND t.status = $${paramIndex}`;
                 queryParams.push(status);
             }
 
-            // Fetch the user's tickets with message count
+            // Fetch tickets with message count
             const tickets = await query(
                 `SELECT t.id, t.ticket_number as "ticketNumber", t.subject, t.category, t.status,
-                    t.created_at as "createdAt", t.updated_at as "lastUpdated", t.user_id as "userId",
-                    COALESCE(t.created_by_name, c.name) as name,
-                    COALESCE(t.created_by_email, c.email) as email,
-                    (SELECT COUNT(*) FROM ticket_messages WHERE ticket_id = t.id) as "messageCount"
-                FROM support_tickets t
-                LEFT JOIN ticket_contact_info c ON t.id = c.ticket_id
-                WHERE t.user_id = $1 ${statusCondition}
-                ORDER BY t.updated_at DESC`,
+                t.created_at as "createdAt", t.updated_at as "lastUpdated", t.user_id as "userId",
+                COALESCE(t.created_by_name, c.name) as name,
+                COALESCE(t.created_by_email, c.email) as email,
+                (SELECT COUNT(*) FROM ticket_messages WHERE ticket_id = t.id) as "messageCount"
+            FROM support_tickets t
+            LEFT JOIN ticket_contact_info c ON t.id = c.ticket_id
+            ${userCondition} ${statusCondition}
+            ORDER BY t.updated_at DESC`,
                 queryParams
             );
 
