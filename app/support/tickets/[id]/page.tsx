@@ -19,13 +19,15 @@ export const metadata: Metadata = {
 export default async function TicketDetailPage({ params }: { params: { id: string } }) {
     const session = await getServerSession(authOptions);
 
+    const { id } = await params;
+
     // If user is not logged in, redirect to login
     if (!session?.user) {
-        redirect('/login?callbackUrl=' + encodeURIComponent(`/support/tickets/${params.id}`));
+        redirect('/login?callbackUrl=' + encodeURIComponent(`/support/tickets/${id}`));
     }
 
     // Get the ticket using the ticket service
-    const ticket = await ticketService.getTicketById(params.id);
+    const ticket = await ticketService.getTicketById(id);
 
     // If ticket doesn't exist, show 404
     if (!ticket) {
@@ -35,7 +37,7 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
     // Check if the user has permission to view this ticket
     const userId = session.user.id;
     const roles = session.user.roles || [];
-    const hasAccess = await ticketService.hasTicketAccess(params.id, userId, roles);
+    const hasAccess = await ticketService.hasTicketAccess(id, userId, roles);
 
     // If user doesn't have permission, redirect to access denied
     if (!hasAccess) {

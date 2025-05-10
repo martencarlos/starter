@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminUserEditPage({ params }: { params: { id: string } }) {
-    const { id } = params;
+    const { id } = await params;
 
     // Fetch user with roles
     const user = await queryOne(
